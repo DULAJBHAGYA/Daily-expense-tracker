@@ -1,5 +1,6 @@
 "use client"
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { 
   Plus, 
   Edit3, 
@@ -176,9 +177,11 @@ const ExpenseTracker = () => {
             {/* User Info */}
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
-                <img 
+                <Image 
                   src={user.avatar} 
                   alt={user.name} 
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full object-cover"
                 />
                 <span className="text-gray-700 font-medium">{user.name}</span>
@@ -197,7 +200,7 @@ const ExpenseTracker = () => {
           <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-red-600 text-sm font-medium">Today's Expenses</p>
+                <p className="text-red-600 text-sm font-medium">Today&apos;s Expenses</p>
                 <p className="text-2xl font-bold text-gray-900">{todayExpenses.toFixed(2)} lkr</p>
               </div>
               <TrendingDown className="w-8 h-8 text-red-500" />

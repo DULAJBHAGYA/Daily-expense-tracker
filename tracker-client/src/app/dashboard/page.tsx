@@ -10,7 +10,6 @@ import {
   TrendingDown,
   User,
   LogOut,
-  Filter
 } from 'lucide-react';
 
 interface Expense {

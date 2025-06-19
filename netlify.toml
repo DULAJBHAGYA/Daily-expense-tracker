@@ -1,0 +1,7 @@
+[build]
+  base = "tracker-client"
+  publish = "tracker-client/.next"
+  command = "npm run build"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

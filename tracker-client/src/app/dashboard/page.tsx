@@ -2,10 +2,6 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import {
-  Plus,
-  Edit3,
-  Trash2,
-  Calendar,
   TrendingUp,
   TrendingDown,
   LogOut,

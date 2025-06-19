@@ -8,10 +8,10 @@ import {
   Calendar,
   TrendingUp,
   TrendingDown,
-  User,
   LogOut,
   Wallet,
 } from "lucide-react";
+import { SignOutButton, useUser } from "@clerk/nextjs";
 
 interface Expense {
   id: string;
@@ -20,11 +20,6 @@ interface Expense {
   description: string;
   date: string;
   type: "expense" | "income";
-}
-
-interface User {
-  name: string;
-  avatar: string;
 }
 
 const ExpenseTracker = () => {
@@ -68,11 +63,7 @@ const ExpenseTracker = () => {
     type: "expense" as "expense" | "income",
   });
 
-  const user: User = {
-    name: "John Doe",
-    avatar:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face",
-  };
+  const { user } = useUser();
 
   const today = new Date().toISOString().split("T")[0];
   const currentMonth = new Date().getMonth();
@@ -182,18 +173,28 @@ const ExpenseTracker = () => {
             {/* User Info */}
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
-                <Image
-                  src={user.avatar}
-                  alt={user.name}
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-                <span className="text-gray-700 font-medium">{user.name}</span>
+                {user?.imageUrl ? (
+                  <Image
+                    src={user?.imageUrl}
+                    alt={`${user?.firstName} ${user?.lastName}`}
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold text-white">
+                    {user?.firstName?.[0] ?? "U"}
+                  </div>
+                )}
+                <span className="text-gray-700 font-medium">
+                  {user?.firstName + " " + user?.lastName}
+                </span>
               </div>
-              <button className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                <LogOut className="w-5 h-5" />
-              </button>
+              <SignOutButton redirectUrl="/sign-in">
+                <button className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </SignOutButton>
             </div>
           </div>
         </div>

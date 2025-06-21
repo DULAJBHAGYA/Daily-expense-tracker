@@ -1,10 +1,11 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Edit3, Trash2 } from "lucide-react";
+import api from "@/utils/api";
 
 interface Expense {
   id: string;
-  reason: string;
+  category: string;
   amount: number;
   description: string;
   date: string;
@@ -22,28 +23,70 @@ const MonthlyOverview: React.FC<MonthlyOverviewProps> = ({
   onEditExpense,
   onDeleteExpense,
 }) => {
-  const currentMonth = new Date().getMonth();
+  const currentMonth = new Date().getMonth() + 1; 
   const currentYear = new Date().getFullYear();
+  
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
+  const [monthlyExpenseTotal, setMonthlyExpenseTotal] = useState(0);
+  const [monthlyBalance, setMonthlyBalance] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchMonthlyData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch monthly income
+        const incomeResponse = await api.get(`/sum/incomes/${currentYear}/${currentMonth}`);
+        const incomeData = incomeResponse.data;
+        setMonthlyIncome(incomeData.totalIncome || 0);
+        
+        // Fetch monthly expenses
+        const expenseResponse = await api.get(`/sum/expenses/${currentYear}/${currentMonth}`);
+        const expenseData = expenseResponse.data;
+        setMonthlyExpenseTotal(expenseData.totalExpense || 0);
+        
+        // Fetch net balance
+        const balanceResponse = await api.get(`/net-balance/${currentYear}/${currentMonth}`);
+        const balanceData = balanceResponse.data;
+        setMonthlyBalance(balanceData.netBalance || 0);
+        
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch monthly data');
+        console.error('Error fetching monthly data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMonthlyData();
+  }, [currentYear, currentMonth]);
 
   // Filter expenses by current month for monthly view
   const monthlyExpenses = expenses.filter((expense) => {
     const expenseDate = new Date(expense.date);
     return (
-      expenseDate.getMonth() === currentMonth &&
+      expenseDate.getMonth() + 1 === currentMonth &&
       expenseDate.getFullYear() === currentYear
     );
   });
 
-  // Calculate totals
-  const monthlyIncome = monthlyExpenses
-    .filter((expense) => expense.type === "income")
-    .reduce((sum, expense) => sum + expense.amount, 0);
+  if (loading) {
+    return (
+      <div className="p-6">
+        <p>Loading monthly data...</p>
+      </div>
+    );
+  }
 
-  const monthlyExpenseTotal = monthlyExpenses
-    .filter((expense) => expense.type === "expense")
-    .reduce((sum, expense) => sum + expense.amount, 0);
-
-  const monthlyBalance = monthlyIncome - monthlyExpenseTotal;
+  if (error) {
+    return (
+      <div className="p-6">
+        <p className="text-red-500">Error: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -103,17 +146,11 @@ const MonthlyOverview: React.FC<MonthlyOverviewProps> = ({
                 Month
               </th>
               <th className="px-6 py-3 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
-                Type
+                Total Income
               </th>
               <th className="px-6 py-3 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
-                Reason
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
-                Amount
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+                Total Expenses
+              </th>            
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -144,34 +181,24 @@ const MonthlyOverview: React.FC<MonthlyOverviewProps> = ({
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {expense.reason}
+                    {expense.category}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span
-                      className={
-                        expense.type === "income"
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {expense.amount.toFixed(2)} lkr
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <button
+                      onClick={() => onEditExpense(expense)}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
                     >
-                      ${expense.amount.toFixed(2)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => onEditExpense(expense)}
-                        className="text-emerald-600 hover:text-emerald-900 p-1 hover:bg-emerald-50 rounded"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => onDeleteExpense(expense.id)}
-                        className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                      <Edit3 size={16} />
+                    </button>
+                    <button
+                      onClick={() => onDeleteExpense(expense.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </td>
                 </tr>
               ))

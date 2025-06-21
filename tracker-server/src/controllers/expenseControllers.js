@@ -182,7 +182,7 @@ exports.getIncomeSumByDate = async (req, res) => {
       }
     ]);
 
-    res.json({ totalIncome: result[0]?.totalIncome || 0 });
+    res.json({ totalDayIncome: result[0]?.totalIncome || 0 });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -215,7 +215,7 @@ exports.getExpenseSumByDate = async (req, res) => {
       }
     ]);
 
-    res.json({ totalExpense: result[0]?.totalExpense || 0 });
+    res.json({ totalDayExpense: result[0]?.totalExpense || 0 });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

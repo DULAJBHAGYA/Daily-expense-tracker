@@ -1,12 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import axios from "axios";
+import api from "@/utils/api";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import {
-  TrendingUp,
-  TrendingDown,
-  LogOut,
-  Wallet,
-} from "lucide-react";
+import { TrendingUp, TrendingDown, LogOut, Wallet } from "lucide-react";
 import { SignOutButton, useUser } from "@clerk/nextjs";
 import Stats from "@/components/stats";
 import DailyExpenses from "@/components/daily";
@@ -14,7 +11,7 @@ import MonthlyOverview from "@/components/monthly";
 
 interface Expense {
   id: string;
-  reason: string;
+  category: string;
   amount: number;
   description: string;
   date: string;
@@ -22,33 +19,11 @@ interface Expense {
 }
 
 const ExpenseTracker = () => {
-  const [expenses, setExpenses] = useState<Expense[]>([
-    {
-      id: "1",
-      reason: "Groceries",
-      amount: 75.5,
-      description: "Weekly grocery shopping at supermarket",
-      date: "2025-06-18",
-      type: "expense",
-    },
-    {
-      id: "2",
-      reason: "Salary",
-      amount: 3000,
-      description: "Monthly salary deposit",
-      date: "2025-06-18",
-      type: "income",
-    },
-    {
-      id: "3",
-      reason: "Coffee",
-      amount: 4.5,
-      description: "Morning coffee from cafe",
-      date: "2025-06-18",
-      type: "expense",
-    },
-  ]);
-
+  const [todayExpenseSum, setTodayExpenseSum] = useState<number>(0);
+  const [todayIncomeSum, setTodayIncomeSum] = useState<number>(0);
+  const [monthlyIncome] = useState<number>(0);
+  const [monthlyExpenseTotal] = useState<number>(0);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -56,7 +31,7 @@ const ExpenseTracker = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [newExpense, setNewExpense] = useState({
-    reason: "",
+    category: "",
     amount: "",
     description: "",
     type: "expense" as "expense" | "income",
@@ -64,55 +39,83 @@ const ExpenseTracker = () => {
 
   const { user } = useUser();
 
-  const today = new Date().toISOString().split("T")[0];
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+  // const today = new Date().toISOString().split("T")[0];
+  // const currentMonth = new Date().getMonth() + 1;
+  // const currentYear = new Date().getFullYear();
 
-  // Filter expenses by current month for monthly view
-  const monthlyExpenses = expenses.filter((expense) => {
-    const expenseDate = new Date(expense.date);
-    return (
-      expenseDate.getMonth() === currentMonth &&
-      expenseDate.getFullYear() === currentYear
-    );
-  });
+  //fetch today expenses sum
+  const fetchTodayExpenseSum = async (dateStr: string) => {
+    const [year, month, day] = dateStr.split("-");
+    const monthNum = parseInt(month, 10);
+    const dayNum = parseInt(day, 10);
+    try {
+      const res = await api.get(`/sum/expense/${year}/${monthNum}/${dayNum}`);
+      setTodayExpenseSum(res.data.totalDayExpense || 0);
+    } catch (error) {
+      console.error("Failed to fetch today expense sum:", error);
+      setTodayExpenseSum(0);
+    }
+  };
 
-  // Calculate totals
-  const todayExpenses = expenses
-    .filter((expense) => expense.date === today && expense.type === "expense")
-    .reduce((sum, expense) => sum + expense.amount, 0);
+  //fetch today incomes sum
+  const fetchTodayIncomeSum = async (dateStr: string) => {
+    const [year, month, day] = dateStr.split("-");
+    const monthNum = parseInt(month, 10);
+    const dayNum = parseInt(day, 10);
+    try {
+      const res = await api.get(`/sum/income/${year}/${monthNum}/${dayNum}`);
+      setTodayIncomeSum(res.data.totalDayIncome || 0);
+    } catch (error) {
+      console.error("Failed to fetch today income sum:", error);
+      setTodayIncomeSum(0);
+    }
+  };
 
-  const monthlyIncome = monthlyExpenses
-    .filter((expense) => expense.type === "income")
-    .reduce((sum, expense) => sum + expense.amount, 0);
-
-  const monthlyExpenseTotal = monthlyExpenses
-    .filter((expense) => expense.type === "expense")
-    .reduce((sum, expense) => sum + expense.amount, 0);
+  useEffect(() => {
+    fetchTodayExpenseSum(selectedDate);
+    fetchTodayIncomeSum(selectedDate);
+  }, [selectedDate]);
 
   const monthlyBalance = monthlyIncome - monthlyExpenseTotal;
 
-  const handleAddExpense = () => {
-    if (!newExpense.reason || !newExpense.amount) return;
+  const handleAddExpense = async () => {
+    if (!newExpense.category || !newExpense.amount) return;
 
-    const expense: Expense = {
-      id: Date.now().toString(),
-      reason: newExpense.reason,
+    const expenseData = {
+      category: newExpense.category,
       amount: parseFloat(newExpense.amount),
       description: newExpense.description,
       date: selectedDate,
       type: newExpense.type,
     };
 
-    setExpenses([...expenses, expense]);
-    setNewExpense({ reason: "", amount: "", description: "", type: "expense" });
-    setShowAddModal(false);
+    try {
+      const res = await axios.post(
+        "http://localhost:4000/api/expenses",
+        expenseData
+      );
+      const newExpenseFromServer = res.data;
+
+      setExpenses([...expenses, newExpenseFromServer]);
+      setNewExpense({
+        category: "",
+        amount: "",
+        description: "",
+        type: "expense",
+      });
+      setShowAddModal(false);
+
+      // Refresh the sums
+      fetchTodayExpenseSum(selectedDate);
+    } catch (error) {
+      console.error("Failed to add expense:", error);
+    }
   };
 
   const handleEditExpense = (expense: Expense) => {
     setEditingExpense(expense);
     setNewExpense({
-      reason: expense.reason,
+      category: expense.category,
       amount: expense.amount.toString(),
       description: expense.description,
       type: expense.type,
@@ -120,36 +123,69 @@ const ExpenseTracker = () => {
     setShowAddModal(true);
   };
 
-  const handleUpdateExpense = () => {
-    if (!editingExpense || !newExpense.reason || !newExpense.amount) return;
+  const handleUpdateExpense = async () => {
+    if (!editingExpense || !newExpense.category || !newExpense.amount) return;
 
-    setExpenses(
-      expenses.map((expense) =>
-        expense.id === editingExpense.id
-          ? {
-              ...expense,
-              reason: newExpense.reason,
-              amount: parseFloat(newExpense.amount),
-              description: newExpense.description,
-              type: newExpense.type,
-            }
-          : expense
-      )
-    );
+    const updatedData = {
+      category: newExpense.category,
+      amount: parseFloat(newExpense.amount),
+      description: newExpense.description,
+      type: newExpense.type,
+    };
 
-    setEditingExpense(null);
-    setNewExpense({ reason: "", amount: "", description: "", type: "expense" });
-    setShowAddModal(false);
+    try {
+      await axios.put(
+        `http://localhost:4000/api/expenses/${editingExpense.id}`,
+        updatedData
+      );
+
+      setExpenses(
+        expenses.map((expense) =>
+          expense.id === editingExpense.id
+            ? { ...expense, ...updatedData }
+            : expense
+        )
+      );
+
+      setEditingExpense(null);
+      setNewExpense({
+        category: "",
+        amount: "",
+        description: "",
+        type: "expense",
+      });
+      setShowAddModal(false);
+
+      // Refresh the sums
+      fetchTodayExpenseSum(selectedDate);
+      fetchTodayIncomeSum(selectedDate);
+    } catch (error) {
+      console.error("Failed to update expense:", error);
+    }
   };
 
-  const handleDeleteExpense = (id: string) => {
-    setExpenses(expenses.filter((expense) => expense.id !== id));
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      await axios.delete(`/api/expenses/${id}`);
+      setExpenses(expenses.filter((expense) => expense.id !== id));
+
+      // Refresh the sums
+      fetchTodayExpenseSum(selectedDate);
+      fetchTodayIncomeSum(selectedDate);
+    } catch (error) {
+      console.error("Failed to delete expense:", error);
+    }
   };
 
   const closeModal = () => {
     setShowAddModal(false);
     setEditingExpense(null);
-    setNewExpense({ reason: "", amount: "", description: "", type: "expense" });
+    setNewExpense({
+      category: "",
+      amount: "",
+      description: "",
+      type: "expense",
+    });
   };
 
   return (
@@ -197,28 +233,28 @@ const ExpenseTracker = () => {
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 ">
+          <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-red-600 text-sm font-medium">
                   Today&apos;s Expenses
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {todayExpenses.toFixed(2)} lkr
+                  {todayExpenseSum.toFixed(2)} lkr
                 </p>
               </div>
               <TrendingDown className="w-8 h-8 text-red-500" />
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 ">
+          <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-600 text-sm font-medium">
-                  Monthly Income
+                  Today&apos;s Incomes
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {monthlyIncome.toFixed(2)} lkr
+                  {todayIncomeSum.toFixed(2)} lkr
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-green-500" />
@@ -228,9 +264,7 @@ const ExpenseTracker = () => {
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-600 text-sm font-medium">
-                  Monthly Balance
-                </p>
+                <p className="text-blue-600 text-sm font-medium">Savings</p>
                 <p
                   className={`text-2xl font-bold ${
                     monthlyBalance >= 0 ? "text-green-600" : "text-red-600"
@@ -284,7 +318,6 @@ const ExpenseTracker = () => {
           {/* Daily Expenses Tab */}
           {activeTab === "daily" && (
             <DailyExpenses
-              expenses={expenses}
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
               onAddClick={() => setShowAddModal(true)}
@@ -339,13 +372,13 @@ const ExpenseTracker = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Reason
+                  Category
                 </label>
                 <input
                   type="text"
-                  value={newExpense.reason}
+                  value={newExpense.category}
                   onChange={(e) =>
-                    setNewExpense({ ...newExpense, reason: e.target.value })
+                    setNewExpense({ ...newExpense, category: e.target.value })
                   }
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   placeholder="Enter reason..."

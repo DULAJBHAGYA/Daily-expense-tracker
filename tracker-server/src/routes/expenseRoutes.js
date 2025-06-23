@@ -23,7 +23,7 @@ router.get('/expense-summary/:year/:month', expenseController.getExpenseSummaryB
 
 router.get('/yearly-expenses/:year', expenseController.getYearlyMonthlyExpenses); //get expenses of all months in a year
 
-
+router.get('/summary/from-june-2025', expenseController.getMonthlyIncomeAndExpenseFromJune2025); //get monthly expenses and incomes from june 2025
 
 
 module.exports = router;

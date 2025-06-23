@@ -1,213 +1,78 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Edit3, Trash2 } from "lucide-react";
 import api from "@/utils/api";
 
-interface Expense {
-  id: string;
-  category: string;
-  amount: number;
-  description: string;
-  date: string;
-  type: "expense" | "income";
+interface MonthlySummaryItem {
+  year: number;
+  month: string;
+  income: number;
+  expense: number;
 }
 
-interface MonthlyOverviewProps {
-  expenses: Expense[];
-  onEditExpense: (expense: Expense) => void;
-  onDeleteExpense: (id: string) => void;
-}
-
-const MonthlyOverview: React.FC<MonthlyOverviewProps> = ({
-  expenses,
-  onEditExpense,
-  onDeleteExpense,
-}) => {
-  const currentMonth = new Date().getMonth() + 1; 
-  const currentYear = new Date().getFullYear();
-  
-  const [monthlyIncome, setMonthlyIncome] = useState(0);
-  const [monthlyExpenseTotal, setMonthlyExpenseTotal] = useState(0);
-  const [monthlyBalance, setMonthlyBalance] = useState(0);
-  const [loading, setLoading] = useState(true);
+const MonthlySummary: React.FC = () => {
+  const [summary, setSummary] = useState<MonthlySummaryItem[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchMonthlySummary = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/summary/from-june-2025");
+      setSummary(res.data.data || []);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching summary:", err);
+      setError("Failed to fetch summary");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchMonthlyData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch monthly income
-        const incomeResponse = await api.get(`/sum/incomes/${currentYear}/${currentMonth}`);
-        const incomeData = incomeResponse.data;
-        setMonthlyIncome(incomeData.totalIncome || 0);
-        
-        // Fetch monthly expenses
-        const expenseResponse = await api.get(`/sum/expenses/${currentYear}/${currentMonth}`);
-        const expenseData = expenseResponse.data;
-        setMonthlyExpenseTotal(expenseData.totalExpense || 0);
-        
-        // Fetch net balance
-        const balanceResponse = await api.get(`/net-balance/${currentYear}/${currentMonth}`);
-        const balanceData = balanceResponse.data;
-        setMonthlyBalance(balanceData.netBalance || 0);
-        
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch monthly data');
-        console.error('Error fetching monthly data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMonthlyData();
-  }, [currentYear, currentMonth]);
-
-  // Filter expenses by current month for monthly view
-  const monthlyExpenses = expenses.filter((expense) => {
-    const expenseDate = new Date(expense.date);
-    return (
-      expenseDate.getMonth() + 1 === currentMonth &&
-      expenseDate.getFullYear() === currentYear
-    );
-  });
-
-  if (loading) {
-    return (
-      <div className="p-6">
-        <p>Loading monthly data...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6">
-        <p className="text-red-500">Error: {error}</p>
-      </div>
-    );
-  }
+    fetchMonthlySummary();
+  }, []);
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Monthly Overview -{" "}
-          {new Date().toLocaleDateString("en-US", {
-            month: "long",
-            year: "numeric",
-          })}
-        </h3>
-      </div>
+      <h2 className="text-xl font-bold mb-4">Monthly Summary (from June 2025)</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-          <h4 className="text-green-800 font-medium">Total Income</h4>
-          <p className="text-2xl font-bold text-green-600">
-            {monthlyIncome.toFixed(2)} lkr
-          </p>
-        </div>
-        <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-          <h4 className="text-red-800 font-medium">Total Expenses</h4>
-          <p className="text-2xl font-bold text-red-600">
-            {monthlyExpenseTotal.toFixed(2)} lkr
-          </p>
-        </div>
-        <div
-          className={`rounded-lg p-4 border ${
-            monthlyBalance >= 0
-              ? "bg-blue-50 border-blue-200"
-              : "bg-red-50 border-red-200"
-          }`}
-        >
-          <h4
-            className={`font-medium ${
-              monthlyBalance >= 0 ? "text-blue-800" : "text-red-800"
-            }`}
-          >
-            Net Balance
-          </h4>
-          <p
-            className={`text-2xl font-bold ${
-              monthlyBalance >= 0 ? "text-blue-600" : "text-red-600"
-            }`}
-          >
-            {monthlyBalance.toFixed(2)} lkr
-          </p>
-        </div>
-      </div>
+      {loading && <p className="text-gray-500">Loading summary...</p>}
+      {error && <p className="text-red-500">{error}</p>}
 
-      {/* Monthly Transactions */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
-                Month
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
-                Total Income
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
-                Total Expenses
-              </th>            
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {monthlyExpenses.length === 0 ? (
+      {!loading && summary.length === 0 && <p className="text-gray-500">No data available.</p>}
+
+      {summary.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <thead className="bg-gray-50">
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-6 py-4 text-center text-gray-500"
-                >
-                  No transactions found for this month
-                </td>
+                <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase">Month</th>
+                <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase">Income (LKR)</th>
+                <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase">Expense (LKR)</th>
+                <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase">Balance</th>
               </tr>
-            ) : (
-              monthlyExpenses.map((expense) => (
-                <tr key={expense.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(expense.date).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        expense.type === "income"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {expense.type === "income" ? "Income" : "Expense"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {expense.category}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {expense.amount.toFixed(2)} lkr
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <button
-                      onClick={() => onEditExpense(expense)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      <Edit3 size={16} />
-                    </button>
-                    <button
-                      onClick={() => onDeleteExpense(expense.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {summary.map((item, index) => (
+                <tr key={`${item.month}-${item.year}`}>
+                  <td className="px-6 py-4 whitespace-nowrap">{`${item.month} ${item.year}`}</td>
+                  <td className="px-6 py-4 text-green-600 font-semibold">{item.income.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-red-600 font-semibold">{item.expense.toFixed(2)}</td>
+                  <td
+                    className={`px-6 py-4 font-bold ${
+                      item.income - item.expense >= 0 ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    {(item.income - item.expense).toFixed(2)}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
 
-export default MonthlyOverview;
+export default MonthlySummary;

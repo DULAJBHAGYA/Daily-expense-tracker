@@ -422,3 +422,79 @@ exports.deleteExpense = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+
+exports.getMonthlyIncomeAndExpenseFromJune2025 = async (req, res) => {
+  try {
+    const start = new Date(Date.UTC(2025, 5, 1)); // June = month 5 (0-indexed)
+    
+    const now = new Date();
+    const end = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1)); // Start of next month
+
+    const data = await Expense.aggregate([
+      {
+        $match: {
+          date: { $gte: start, $lt: end },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$date" },
+            month: { $month: "$date" },
+            type: "$type",
+          },
+          total: { $sum: "$amount" },
+        },
+      },
+      {
+        $sort: {
+          "_id.year": 1,
+          "_id.month": 1,
+        },
+      },
+    ]);
+
+    // Month names map
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    // Prepare default monthly data
+    const monthlyData = [];
+
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-indexed
+
+    for (let year = 2025; year <= currentYear; year++) {
+      const startMonth = year === 2025 ? 5 : 0;
+      const endMonth = year === currentYear ? currentMonth : 11;
+
+      for (let m = startMonth; m <= endMonth; m++) {
+        monthlyData.push({
+          year,
+          month: monthNames[m],
+          income: 0,
+          expense: 0,
+        });
+      }
+    }
+
+    data.forEach(({ _id, total }) => {
+      const target = monthlyData.find(
+        (entry) => entry.year === _id.year && entry.month === monthNames[_id.month - 1]
+      );
+
+      if (target) {
+        if (_id.type === "income") target.income = total;
+        else if (_id.type === "expense") target.expense = total;
+      }
+    });
+
+    res.json({ from: "June 2025", to: `${monthNames[currentMonth]} ${currentYear}`, data: monthlyData });
+  } catch (error) {
+    console.error("Error fetching monthly income/expenses:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

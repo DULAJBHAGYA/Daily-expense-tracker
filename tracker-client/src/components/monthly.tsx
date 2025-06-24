@@ -53,7 +53,7 @@ const MonthlySummary: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {summary.map((item, index) => (
+              {summary.map((item) => (
                 <tr key={`${item.month}-${item.year}`}>
                   <td className="px-6 py-4 whitespace-nowrap">{`${item.month} ${item.year}`}</td>
                   <td className="px-6 py-4 text-green-600 font-semibold">{item.income.toFixed(2)}</td>

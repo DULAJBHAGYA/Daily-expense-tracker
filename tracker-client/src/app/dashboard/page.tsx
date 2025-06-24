@@ -328,11 +328,7 @@ const ExpenseTracker = () => {
 
           {/* Monthly Overview Tab */}
           {activeTab === "monthly" && (
-            <MonthlyOverview
-              expenses={expenses}
-              onEditExpense={handleEditExpense}
-              onDeleteExpense={handleDeleteExpense}
-            />
+            <MonthlyOverview/>
           )}
 
           {/* Statistics Tab */}

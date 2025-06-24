@@ -1,7 +1,11 @@
 [build]
   base = "tracker-client"
-  publish = "tracker-client/.next"
-  command = "npm run build"
+  publish = ".next"  # Changed from "tracker-client/.next"
+  command = "npm install && npm run build"  # Added npm install
+
+[context.production.environment]
+  NODE_VERSION = "18"  # Required for Next.js 15
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+  inputs = {}  # Explicit empty inputs

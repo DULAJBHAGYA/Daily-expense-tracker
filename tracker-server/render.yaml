@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: tracker-server
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+    autoDeploy: true
+    scaling:
+      minInstances: 0
+      maxInstances: 10
+      targetConcurrency: 10
+      targetCpuUtilizationPercent: 70 

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "WeSpend",
   description: "Expense tracking application",
   icons: {
-    icon: '/favicon.ico',
+    icon: "/favicon.ico",
   },
 };
 
@@ -23,15 +23,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider appearance={{
-      variables: {
-        colorPrimary: "#10b981",
-        fontFamily: poppins.style.fontFamily,
-      }
-    }}>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      appearance={{
+        variables: {
+          colorPrimary: "#10b981",
+          fontFamily: poppins.style.fontFamily,
+        },
+      }}
+    >
       <html lang="en" className={poppins.variable}>
-        <head><link rel="icon" href="/favicon.ico" /></head>
-        <body className={`antialiased bg-gray-50`}>{children}</body>
+        <head>
+          <link rel="icon" href="/favicon.ico" />
+        </head>
+        <body className="antialiased bg-gray-50">{children}</body>
       </html>
     </ClerkProvider>
   );

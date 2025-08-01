@@ -17,13 +17,12 @@ router.get('/sum/expense/:year/:month/:day', expenseController.getExpenseSumByDa
 router.get('/sum/incomes/:year/:month', expenseController.getIncomeSumByMonth); //get sum of all incomes by month
 router.get('/sum/expenses/:year/:month', expenseController.getExpenseSumByMonth); //get sum of all expenses by month
 
-router.get('/net-balance/:year/:month', expenseController.getMonthlyNetBalance); //get monthly net balance
+router.get('/netbalance/:year/:month', expenseController.getMonthlyNetBalance); //get monthly net balance
 
 router.get('/expense-summary/:year/:month', expenseController.getExpenseSummaryByCategory); //get sum and percentage of expenses by category in a month
 
 router.get('/yearly-expenses/:year', expenseController.getYearlyMonthlyExpenses); //get expenses of all months in a year
 
-router.get('/summary/from-june-2025', expenseController.getMonthlyIncomeAndExpenseFromJune2025); //get monthly expenses and incomes from june 2025
-
+router.get('/summary/june-2025', expenseController.getMonthlyIncomeAndExpenseFromJune2025); //get monthly expenses and incomes from june 2025
 
 module.exports = router;

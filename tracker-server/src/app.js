@@ -12,7 +12,7 @@ connectDB();
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://we-spend.netlify.app/'] // Update with your frontend URL
+    ? ['https://we-spend.netlify.app'] // Your frontend URL
     : true
 }));
 app.use(express.json({ limit: '10mb' }));

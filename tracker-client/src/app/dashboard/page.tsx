@@ -3,11 +3,14 @@ import axios from "axios";
 import api from "@/utils/api";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { TrendingUp, TrendingDown, LogOut, Wallet } from "lucide-react";
+import { TrendingUp, TrendingDown, LogOut, Wallet, Menu, X } from "lucide-react";
 import { SignOutButton, useUser } from "@clerk/nextjs";
 import Stats from "@/components/stats";
 import DailyExpenses from "@/components/daily";
 import MonthlyOverview from "@/components/monthly";
+import CustomizableDashboard from "@/components/CustomizableDashboard";
+import ThemeToggle from "@/components/ThemeToggle";
+import { useThemeStore } from "@/utils/theme";
 
 interface Expense {
   id: string;
@@ -27,9 +30,10 @@ const ExpenseTracker = () => {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
-  const [activeTab, setActiveTab] = useState("daily");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [newExpense, setNewExpense] = useState({
     category: "",
     amount: "",
@@ -38,6 +42,7 @@ const ExpenseTracker = () => {
   });
 
   const { user } = useUser();
+  const { theme } = useThemeStore();
 
   // const today = new Date().toISOString().split("T")[0];
   // const currentMonth = new Date().getMonth() + 1;
@@ -49,10 +54,13 @@ const ExpenseTracker = () => {
     const monthNum = parseInt(month, 10);
     const dayNum = parseInt(day, 10);
     try {
-      const res = await api.get(`/sum/expense/${year}/${monthNum}/${dayNum}`);
+      console.log(`Fetching expense sum for ${year}/${monthNum}/${dayNum}`);
+      const res = await api.get(`/api/expenses/sum/expense/${year}/${monthNum}/${dayNum}`);
+      console.log('Expense sum response:', res.data);
       setTodayExpenseSum(res.data.totalDayExpense || 0);
     } catch (error) {
       console.error("Failed to fetch today expense sum:", error);
+      // Set default value if server is not available
       setTodayExpenseSum(0);
     }
   };
@@ -63,10 +71,13 @@ const ExpenseTracker = () => {
     const monthNum = parseInt(month, 10);
     const dayNum = parseInt(day, 10);
     try {
-      const res = await api.get(`/sum/income/${year}/${monthNum}/${dayNum}`);
+      console.log(`Fetching income sum for ${year}/${monthNum}/${dayNum}`);
+      const res = await api.get(`/api/expenses/sum/income/${year}/${monthNum}/${dayNum}`);
+      console.log('Income sum response:', res.data);
       setTodayIncomeSum(res.data.totalDayIncome || 0);
     } catch (error) {
       console.error("Failed to fetch today income sum:", error);
+      // Set default value if server is not available
       setTodayIncomeSum(0);
     }
   };
@@ -188,20 +199,29 @@ const ExpenseTracker = () => {
     });
   };
 
+  const tabItems = [
+    { id: "dashboard", label: "Dashboard", icon: "📊" },
+    { id: "daily", label: "Daily Expenses", icon: "📅" },
+    { id: "monthly", label: "Monthly Overview", icon: "📈" },
+    { id: "stats", label: "Statistics", icon: "📊" },
+  ];
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
       {/* Header */}
-      <header className="bg-white">
+      <header className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-sm border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             {/* Logo */}
             <div className="flex items-center space-x-3">
               <Image src="/logo.png" alt="logo" width={50} height={50} />
-              <h1 className="text-3xl font-bold text-gray-900">WeSpend</h1>
+              <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>WeSpend</h1>
             </div>
 
-            {/* User Info */}
-            <div className="flex items-center space-x-4">
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-4">
+              
+              {/* User Info */}
               <div className="flex items-center space-x-3">
                 {user?.imageUrl ? (
                   <Image
@@ -216,104 +236,100 @@ const ExpenseTracker = () => {
                     {user?.firstName?.[0] ?? "U"}
                   </div>
                 )}
-                <span className="text-gray-700 font-medium">
+                <span className={`font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   {user?.firstName + " " + user?.lastName}
                 </span>
               </div>
+              
+              <ThemeToggle />
+ 
               <SignOutButton redirectUrl="/sign-in">
-                <button className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                <button className={`p-2 ${theme === 'dark' ? 'text-gray-400 hover:text-red-400 hover:bg-gray-700' : 'text-gray-500 hover:text-red-500 hover:bg-red-50'} rounded-lg transition-colors`}>
                   <LogOut className="w-5 h-5" />
                 </button>
               </SignOutButton>
             </div>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center space-x-2">
+              <ThemeToggle />
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className={`p-2 rounded-lg ${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
+
+          {/* Mobile Navigation */}
+          {mobileMenuOpen && (
+            <div className={`md:hidden py-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center space-x-3">
+                  {user?.imageUrl ? (
+                    <Image
+                      src={user?.imageUrl}
+                      alt={`${user?.firstName} ${user?.lastName}`}
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold text-white">
+                      {user?.firstName?.[0] ?? "U"}
+                    </div>
+                  )}
+                  <span className={`font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {user?.firstName + " " + user?.lastName}
+                  </span>
+                </div>
+                
+                <SignOutButton redirectUrl="/sign-in">
+                  <button className={`w-full flex items-center space-x-2 p-2 rounded-lg ${theme === 'dark' ? 'text-gray-400 hover:text-red-400 hover:bg-gray-700' : 'text-gray-500 hover:text-red-500 hover:bg-red-50'} transition-colors`}>
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </SignOutButton>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-red-600 text-sm font-medium">
-                  Today&apos;s Expenses
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {todayExpenseSum.toFixed(2)} lkr
-                </p>
-              </div>
-              <TrendingDown className="w-8 h-8 text-red-500" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-600 text-sm font-medium">
-                  Today&apos;s Incomes
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {todayIncomeSum.toFixed(2)} lkr
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-green-500" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-600 text-sm font-medium">Savings</p>
-                <p
-                  className={`text-2xl font-bold ${
-                    monthlyBalance >= 0 ? "text-green-600" : "text-red-600"
+        {/* Tab Navigation */}
+        <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg mb-6`}>
+          <div className={`border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+            <nav className="flex flex-wrap space-x-1 px-4 sm:px-6">
+              {tabItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`py-4 px-3 sm:px-4 border-b-2 font-bold text-sm transition-colors ${
+                    activeTab === item.id
+                      ? `border-emerald-500 text-emerald-600`
+                      : `${theme === 'dark' ? 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`
                   }`}
                 >
-                  {monthlyBalance.toFixed(2)} lkr
-                </p>
-              </div>
-              <Wallet className="w-8 h-8 text-blue-500" />
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="bg-white rounded-xl shadow-lg mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
-              <button
-                onClick={() => setActiveTab("daily")}
-                className={`py-4 px-1 border-b-2 font-bold text-sm ${
-                  activeTab === "daily"
-                    ? "border-emerald-500 text-emerald-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Daily Expenses
-              </button>
-              <button
-                onClick={() => setActiveTab("monthly")}
-                className={`py-4 px-1 border-b-2 font-bold text-sm ${
-                  activeTab === "monthly"
-                    ? "border-emerald-500 text-emerald-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Monthly Overview
-              </button>
-              <button
-                onClick={() => setActiveTab("stats")}
-                className={`py-4 px-1 border-b-2 font-bold text-sm ${
-                  activeTab === "stats"
-                    ? "border-emerald-500 text-emerald-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Statistics
-              </button>
+                  <span className="hidden sm:inline mr-2">{item.icon}</span>
+                  <span className="sm:hidden">{item.icon}</span>
+                  <span className="hidden sm:inline">{item.label}</span>
+                </button>
+              ))}
             </nav>
           </div>
+
+          {/* Dashboard Tab */}
+          {activeTab === "dashboard" && (
+            <div className="p-6">
+              <CustomizableDashboard
+                todayExpenseSum={todayExpenseSum}
+                todayIncomeSum={todayIncomeSum}
+                monthlyBalance={monthlyBalance}
+              />
+            </div>
+          )}
 
           {/* Daily Expenses Tab */}
           {activeTab === "daily" && (
@@ -339,8 +355,8 @@ const ExpenseTracker = () => {
       {/* Add/Edit Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-xl max-w-md w-full p-6`}>
+            <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
               {editingExpense
                 ? "Edit Entry"
                 : `Add ${newExpense.type === "income" ? "Income" : "Expense"}`}
@@ -348,7 +364,7 @@ const ExpenseTracker = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   Type
                 </label>
                 <select
@@ -359,7 +375,9 @@ const ExpenseTracker = () => {
                       type: e.target.value as "expense" | "income",
                     })
                   }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                    theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                 >
                   <option value="expense">Expense</option>
                   <option value="income">Income</option>
@@ -367,7 +385,7 @@ const ExpenseTracker = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   Category
                 </label>
                 <input
@@ -376,13 +394,15 @@ const ExpenseTracker = () => {
                   onChange={(e) =>
                     setNewExpense({ ...newExpense, category: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                    theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                   placeholder="Enter reason..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   Amount
                 </label>
                 <input
@@ -392,13 +412,15 @@ const ExpenseTracker = () => {
                   onChange={(e) =>
                     setNewExpense({ ...newExpense, amount: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                    theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                   placeholder="0.00"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   Description
                 </label>
                 <textarea
@@ -409,7 +431,9 @@ const ExpenseTracker = () => {
                       description: e.target.value,
                     })
                   }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 h-20 resize-none"
+                  className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 h-20 resize-none ${
+                    theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                   placeholder="Enter description..."
                 />
               </div>
@@ -418,7 +442,9 @@ const ExpenseTracker = () => {
             <div className="flex space-x-3 mt-6">
               <button
                 onClick={closeModal}
-                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+                className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+                  theme === 'dark' ? 'bg-gray-600 hover:bg-gray-500 text-gray-300' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+                }`}
               >
                 Cancel
               </button>

@@ -1,0 +1,29 @@
+{
+  "name": "tracker-server",
+  "description": "Expense tracker backend API",
+  "repository": "https://github.com/DULAJBHAGYA/daily-expense-tracker",
+  "keywords": ["node", "express", "mongodb", "expense-tracker"],
+  "env": {
+    "NODE_ENV": {
+      "description": "Environment mode",
+      "value": "production"
+    },
+    "MONGODB_URI": {
+      "description": "MongoDB connection string",
+      "value": "mongodb+srv://dulajupananda:FY1iTZKbB22FcU4t@wespendcluster0.f4kktid.mongodb.net/tracker?retryWrites=true&w=majority"
+    },
+    "PORT": {
+      "description": "Port for the application",
+      "value": "8080"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "scripts": {
+    "start": "node src/server.js",
+    "build": "npm install"
+  }
+} 

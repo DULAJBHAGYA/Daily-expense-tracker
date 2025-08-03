@@ -12,10 +12,143 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Dark mode styles */
+.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+}
+
+/* Custom classes for overriding global text color */
+.dashboard-header {
+  color: #000000 !important;
+}
+
+.dark .dashboard-header {
+  color: #f3f4f6 !important;
+}
+
+/* Custom classes for dashboard widgets */
+.dashboard-widget {
+  background-color: #ffffff !important;
+}
+
+.dark .dashboard-widget {
+  background-color: #1f2937 !important;
+}
+
+/* Custom classes for widget text */
+.widget-title {
+  color: #000000 !important;
+}
+
+.dark .widget-title {
+  color: #f3f4f6 !important;
+}
+
+.widget-value {
+  color: #000000 !important;
+}
+
+.dark .widget-value {
+  color: #f3f4f6 !important;
+}
+
+.widget-text {
+  color: #000000 !important;
+}
+
+.dark .widget-text {
+  color: #9ca3af !important;
+}
+
+/* Mobile responsive utilities */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-hidden {
+    display: none;
+  }
+  
+  .mobile-full {
+    width: 100%;
+  }
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Custom scrollbar for dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Focus styles for accessibility */
+.focus-visible:focus {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+/* Loading animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Mobile-first responsive design */
+.mobile-first {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .mobile-first {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-first {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-first {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .mobile-first {
+    max-width: 1280px;
   }
 }
 
@@ -23,4 +156,17 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Ensure proper spacing on mobile */
+@media (max-width: 640px) {
+  body {
+    padding: 0;
+  }
+  
+  .mobile-padding {
+    padding: 1rem;
+  }
 }

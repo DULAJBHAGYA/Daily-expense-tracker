@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Pie, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -70,7 +70,6 @@ const Stats = () => {
   const [pieData, setPieData] = useState<PieData | null>(null);
   const [lineData, setLineData] = useState<LineData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [serverAvailable, setServerAvailable] = useState(true);
   const { theme } = useThemeStore();
 
@@ -120,7 +119,7 @@ const Stats = () => {
     ],
   });
 
-  const fetchMonthlySummary = async () => {
+  const fetchMonthlySummary = useCallback(async () => {
     try {
       console.log(`Fetching monthly summary for ${currentYear}/${currentMonth}`);
       const response = await api.get<MonthlySummaryResponse>(
@@ -188,11 +187,10 @@ const Stats = () => {
       console.error("Error fetching monthly summary:", err);
       setPieData(getDefaultPieData());
       setServerAvailable(false);
-      setError("Server not available - showing sample data");
     }
-  };
+  }, [currentYear, currentMonth, theme, getDefaultPieData]);
 
-  const fetchYearlyExpenses = async () => {
+  const fetchYearlyExpenses = useCallback(async () => {
     try {
       console.log(`Fetching yearly expenses for ${currentYear}`);
       const response = await api.get<YearlyExpensesResponse>(
@@ -235,28 +233,24 @@ const Stats = () => {
       console.error("Error fetching yearly expenses:", err);
       setLineData(getDefaultLineData());
       setServerAvailable(false);
-      setError("Server not available - showing sample data");
     }
-  };
+  }, [currentYear, getDefaultLineData]);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      setError(null);
 
       try {
         await Promise.all([fetchMonthlySummary(), fetchYearlyExpenses()]);
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to load data";
-        setError(errorMessage);
+        console.error("Error in fetchData:", err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [currentYear, currentMonth, theme]);
+  }, [currentYear, currentMonth, theme, fetchMonthlySummary, fetchYearlyExpenses]);
 
   if (loading) {
     return (
@@ -268,13 +262,13 @@ const Stats = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      <h3 className={`text-lg font-semibold mb-6 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+      <h2 className={`text-xl font-bold mb-6 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
         Statistics -{" "}
         {new Date().toLocaleDateString("en-US", {
           month: "long",
           year: "numeric",
         })}
-      </h3>
+      </h2>
 
       {!serverAvailable && (
         <div className={`mb-4 p-3 rounded-lg ${theme === 'dark' ? 'bg-yellow-900/20 border border-yellow-600' : 'bg-yellow-50 border border-yellow-200'}`}>

@@ -70,6 +70,9 @@ const DailyExpenses: React.FC<DailyExpensesProps> = ({
 
   return (
     <div className="p-4 sm:p-6">
+      <h2 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+        Daily Expenses
+      </h2>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-4 w-full sm:w-auto">
           <Calendar className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} />

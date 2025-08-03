@@ -1,8 +1,8 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Settings, Save, X } from 'lucide-react';
 import DashboardWidget from './DashboardWidget';
-import { TrendingUp, TrendingDown, Wallet, DollarSign, PiggyBank, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, Target } from 'lucide-react';
 
 interface WidgetData {
   id: string;
@@ -19,6 +19,8 @@ interface CustomizableDashboardProps {
   todayExpenseSum: number;
   todayIncomeSum: number;
   monthlyBalance: number;
+  monthlyExpenseTotal: number;
+  monthlyIncome: number;
   onWidgetChange?: (widgets: WidgetData[]) => void;
 }
 
@@ -26,71 +28,135 @@ const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
   todayExpenseSum,
   todayIncomeSum,
   monthlyBalance,
+  monthlyExpenseTotal,
+  monthlyIncome,
   onWidgetChange,
 }) => {
   const [widgets, setWidgets] = useState<WidgetData[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showAddWidget, setShowAddWidget] = useState(false);
 
-  // Available widget types
-  const availableWidgets = [
-    {
-      id: 'today-expenses',
-      title: "Today's Expenses",
-      value: todayExpenseSum,
-      change: 12,
-      changeType: 'increase' as const,
-      icon: <TrendingDown className="w-5 h-5 text-red-500" />,
-      color: 'bg-red-100 dark:bg-red-900',
-      type: 'expense'
-    },
-    {
-      id: 'today-incomes',
-      title: "Today's Incomes",
-      value: todayIncomeSum,
-      change: 8,
-      changeType: 'increase' as const,
-      icon: <TrendingUp className="w-5 h-5 text-green-500" />,
-      color: 'bg-green-100 dark:bg-green-900',
-      type: 'income'
-    },
-    {
-      id: 'monthly-balance',
-      title: "Monthly Balance",
-      value: monthlyBalance,
-      change: monthlyBalance >= 0 ? 15 : -5,
-      changeType: monthlyBalance >= 0 ? 'increase' as const : 'decrease' as const,
-      icon: <Wallet className="w-5 h-5 text-blue-500" />,
-      color: 'bg-blue-100 dark:bg-blue-900',
-      type: 'balance'
-    },
-    {
-      id: 'savings-goal',
-      title: "Savings Goal",
-      value: "75%",
-      icon: <Target className="w-5 h-5 text-purple-500" />,
-      color: 'bg-purple-100 dark:bg-purple-900',
-      type: 'goal'
-    },
-    {
-      id: 'total-savings',
-      title: "Total Savings",
-      value: 15000,
-      change: 20,
-      changeType: 'increase' as const,
-      icon: <PiggyBank className="w-5 h-5 text-yellow-500" />,
-      color: 'bg-yellow-100 dark:bg-yellow-900',
-      type: 'savings'
-    }
-  ];
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Calculate real percentage changes
+  const calculatePercentageChange = useCallback((current: number, previous: number): number => {
+    if (!mounted) return 0;
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100);
+  }, [mounted]);
+
+  // Calculate savings rate
+  const calculateSavingsRate = (): number => {
+    if (!mounted) return 0;
+    if (monthlyIncome === 0) return 0;
+    const savings = monthlyIncome - monthlyExpenseTotal;
+    return Math.round((savings / monthlyIncome) * 100);
+  };
+
+
 
   // Initialize default widgets
   useEffect(() => {
-    const defaultWidgets = availableWidgets.slice(0, 3);
-    setWidgets(defaultWidgets);
-  }, [todayExpenseSum, todayIncomeSum, monthlyBalance]);
+    if (mounted) {
+      const defaultWidgets = [
+        {
+          id: 'today-expenses',
+          title: "Today's Expenses",
+          value: todayExpenseSum,
+          change: calculatePercentageChange(todayExpenseSum, monthlyExpenseTotal / 30),
+          changeType: (todayExpenseSum > (monthlyExpenseTotal / 30)) ? 'increase' as const : 'decrease' as const,
+          icon: <TrendingDown className="w-5 h-5 text-red-500" />,
+          color: 'widget-icon-red',
+          type: 'expense'
+        },
+        {
+          id: 'today-incomes',
+          title: "Today's Incomes",
+          value: todayIncomeSum,
+          change: calculatePercentageChange(todayIncomeSum, monthlyIncome / 30),
+          changeType: (todayIncomeSum > (monthlyIncome / 30)) ? 'increase' as const : 'decrease' as const,
+          icon: <TrendingUp className="w-5 h-5 text-green-500" />,
+          color: 'widget-icon-green',
+          type: 'income'
+        },
+        {
+          id: 'monthly-balance',
+          title: "Monthly Balance",
+          value: monthlyBalance,
+          change: calculatePercentageChange(monthlyBalance, monthlyIncome * 0.1),
+          changeType: monthlyBalance >= 0 ? 'increase' as const : 'decrease' as const,
+          icon: <Wallet className="w-5 h-5 text-blue-500" />,
+          color: 'widget-icon-blue',
+          type: 'balance'
+        }
+      ];
+      setWidgets(defaultWidgets);
+    }
+  }, [mounted, todayExpenseSum, todayIncomeSum, monthlyBalance, monthlyExpenseTotal, monthlyIncome, calculatePercentageChange]);
+
+  const getAvailableWidgets = () => {
+    if (!mounted) return [];
+    
+    return [
+      {
+        id: 'today-expenses',
+        title: "Today's Expenses",
+        value: todayExpenseSum,
+        change: calculatePercentageChange(todayExpenseSum, monthlyExpenseTotal / 30),
+        changeType: (todayExpenseSum > (monthlyExpenseTotal / 30)) ? 'increase' as const : 'decrease' as const,
+        icon: <TrendingDown className="w-5 h-5 text-red-500" />,
+        color: 'widget-icon-red',
+        type: 'expense'
+      },
+      {
+        id: 'today-incomes',
+        title: "Today's Incomes",
+        value: todayIncomeSum,
+        change: calculatePercentageChange(todayIncomeSum, monthlyIncome / 30),
+        changeType: (todayIncomeSum > (monthlyIncome / 30)) ? 'increase' as const : 'decrease' as const,
+        icon: <TrendingUp className="w-5 h-5 text-green-500" />,
+        color: 'widget-icon-green',
+        type: 'income'
+      },
+      {
+        id: 'monthly-balance',
+        title: "Monthly Balance",
+        value: monthlyBalance,
+        change: calculatePercentageChange(monthlyBalance, monthlyIncome * 0.1),
+        changeType: monthlyBalance >= 0 ? 'increase' as const : 'decrease' as const,
+        icon: <Wallet className="w-5 h-5 text-blue-500" />,
+        color: 'widget-icon-blue',
+        type: 'balance'
+      },
+      {
+        id: 'savings-goal',
+        title: "Savings Rate",
+        value: `${calculateSavingsRate()}%`,
+        change: calculateSavingsRate() - 20,
+        changeType: calculateSavingsRate() >= 20 ? 'increase' as const : 'decrease' as const,
+        icon: <Target className="w-5 h-5 text-purple-500" />,
+        color: 'widget-icon-purple',
+        type: 'goal'
+      },
+      {
+        id: 'total-savings',
+        title: "Monthly Savings",
+        value: monthlyBalance,
+        change: calculatePercentageChange(monthlyBalance, monthlyIncome * 0.15),
+        changeType: monthlyBalance >= (monthlyIncome * 0.15) ? 'increase' as const : 'decrease' as const,
+        icon: <PiggyBank className="w-5 h-5 text-yellow-500" />,
+        color: 'widget-icon-yellow',
+        type: 'savings'
+      }
+    ];
+  };
 
   const handleAddWidget = (widgetType: string) => {
+    const availableWidgets = getAvailableWidgets();
     const widget = availableWidgets.find(w => w.id === widgetType);
     if (widget && !widgets.find(w => w.id === widget.id)) {
       const newWidgets = [...widgets, widget];
@@ -121,7 +187,7 @@ const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
     <div className="space-y-6">
       {/* Dashboard Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-        <h2 className="text-2xl font-bold dashboard-header">Dashboard</h2>
+        <h2 className="text-xl font-bold dashboard-header">Dashboard</h2>
         
         <div className="flex items-center space-x-2">
           {isEditing && (
@@ -159,17 +225,19 @@ const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
       </div>
 
       {/* Widgets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-transparent">
-        {widgets.map((widget) => (
-          <DashboardWidget
-            key={widget.id}
-            widget={widget}
-            onRemove={isEditing ? handleRemoveWidget : undefined}
-            onEdit={isEditing ? handleEditWidget : undefined}
-            isEditing={isEditing}
-          />
-        ))}
-      </div>
+      {mounted && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-transparent">
+          {widgets.map((widget) => (
+            <DashboardWidget
+              key={widget.id}
+              widget={widget}
+              onRemove={isEditing ? handleRemoveWidget : undefined}
+              onEdit={isEditing ? handleEditWidget : undefined}
+              isEditing={isEditing}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Add Widget Modal */}
       {showAddWidget && (
@@ -188,9 +256,9 @@ const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
             </div>
             
             <div className="space-y-3">
-              {availableWidgets
-                .filter(widget => !widgets.find(w => w.id === widget.id))
-                .map((widget) => (
+              {getAvailableWidgets()
+                .filter((widget: WidgetData) => !widgets.find(w => w.id === widget.id))
+                .map((widget: WidgetData) => (
                   <button
                     key={widget.id}
                     onClick={() => handleAddWidget(widget.id)}

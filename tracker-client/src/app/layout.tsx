@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ClientThemeProvider } from "@/components/ClientThemeProvider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -36,7 +37,11 @@ export default function RootLayout({
         <head>
           <link rel="icon" href="/favicon.ico" />
         </head>
-        <body className="antialiased bg-gray-50">{children}</body>
+        <body className="antialiased bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+          <ClientThemeProvider>
+            {children}
+          </ClientThemeProvider>
+        </body>
       </html>
     </ClerkProvider>
   );

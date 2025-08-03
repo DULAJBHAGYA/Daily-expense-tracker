@@ -1,9 +1,8 @@
 "use client";
-import axios from "axios";
 import api from "@/utils/api";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { TrendingUp, TrendingDown, LogOut, Wallet, Menu, X } from "lucide-react";
+import { LogOut, Menu, X, BarChart3, Calendar, LineChart, PieChart } from "lucide-react";
 import { SignOutButton, useUser } from "@clerk/nextjs";
 import Stats from "@/components/stats";
 import DailyExpenses from "@/components/daily";
@@ -27,9 +26,15 @@ const ExpenseTracker = () => {
   const [monthlyIncome] = useState<number>(0);
   const [monthlyExpenseTotal] = useState<number>(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setSelectedDate(new Date().toISOString().split("T")[0]);
+  }, []);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -49,7 +54,7 @@ const ExpenseTracker = () => {
   // const currentYear = new Date().getFullYear();
 
   //fetch today expenses sum
-  const fetchTodayExpenseSum = async (dateStr: string) => {
+  const fetchTodayExpenseSum = useCallback(async (dateStr: string) => {
     const [year, month, day] = dateStr.split("-");
     const monthNum = parseInt(month, 10);
     const dayNum = parseInt(day, 10);
@@ -63,10 +68,10 @@ const ExpenseTracker = () => {
       // Set default value if server is not available
       setTodayExpenseSum(0);
     }
-  };
+  }, []);
 
   //fetch today incomes sum
-  const fetchTodayIncomeSum = async (dateStr: string) => {
+  const fetchTodayIncomeSum = useCallback(async (dateStr: string) => {
     const [year, month, day] = dateStr.split("-");
     const monthNum = parseInt(month, 10);
     const dayNum = parseInt(day, 10);
@@ -80,17 +85,43 @@ const ExpenseTracker = () => {
       // Set default value if server is not available
       setTodayIncomeSum(0);
     }
-  };
+  }, []);
+
+  //fetch expenses for the selected date
+  const fetchExpenses = useCallback(async (dateStr: string) => {
+    const [year, month, day] = dateStr.split("-");
+    const monthNum = parseInt(month, 10);
+    const dayNum = parseInt(day, 10);
+    try {
+      console.log(`Fetching expenses for ${year}/${monthNum}/${dayNum}`);
+      const res = await api.get(`/api/expenses/entries/${year}/${monthNum}/${dayNum}`);
+      console.log('Expenses response:', res.data);
+      setExpenses(res.data);
+    } catch (error) {
+      console.error("Failed to fetch expenses:", error);
+      setExpenses([]);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchTodayExpenseSum(selectedDate);
-    fetchTodayIncomeSum(selectedDate);
-  }, [selectedDate]);
+    if (mounted && selectedDate) {
+      fetchTodayExpenseSum(selectedDate);
+      fetchTodayIncomeSum(selectedDate);
+      fetchExpenses(selectedDate);
+    }
+  }, [mounted, selectedDate, fetchTodayExpenseSum, fetchTodayIncomeSum, fetchExpenses]);
 
   const monthlyBalance = monthlyIncome - monthlyExpenseTotal;
 
   const handleAddExpense = async () => {
-    if (!newExpense.category || !newExpense.amount) return;
+    if (!newExpense.amount) {
+      alert("Please enter an amount");
+      return;
+    }
+    if (newExpense.type === "expense" && !newExpense.category) {
+      alert("Please select a category for expense");
+      return;
+    }
 
     const expenseData = {
       category: newExpense.category,
@@ -101,10 +132,8 @@ const ExpenseTracker = () => {
     };
 
     try {
-      const res = await axios.post(
-        "http://localhost:4000/api/expenses",
-        expenseData
-      );
+      setIsUpdating(true);
+      const res = await api.post("/api/expenses", expenseData);
       const newExpenseFromServer = res.data;
 
       setExpenses([...expenses, newExpenseFromServer]);
@@ -116,10 +145,29 @@ const ExpenseTracker = () => {
       });
       setShowAddModal(false);
 
-      // Refresh the sums
-      fetchTodayExpenseSum(selectedDate);
+      // Immediately update sums based on the new entry
+      if (newExpense.type === "expense") {
+        setTodayExpenseSum(prev => prev + parseFloat(newExpense.amount));
+      } else {
+        setTodayIncomeSum(prev => prev + parseFloat(newExpense.amount));
+      }
+
+      // Also refresh from server to ensure accuracy
+      await Promise.all([
+        fetchTodayExpenseSum(selectedDate),
+        fetchTodayIncomeSum(selectedDate),
+        fetchExpenses(selectedDate)
+      ]);
+      
+      // Show success message
+      console.log("Successfully added expense/income");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
       console.error("Failed to add expense:", error);
+      alert("Failed to add expense. Please try again.");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -135,7 +183,14 @@ const ExpenseTracker = () => {
   };
 
   const handleUpdateExpense = async () => {
-    if (!editingExpense || !newExpense.category || !newExpense.amount) return;
+    if (!editingExpense || !newExpense.amount) {
+      alert("Please enter an amount");
+      return;
+    }
+    if (newExpense.type === "expense" && !newExpense.category) {
+      alert("Please select a category for expense");
+      return;
+    }
 
     const updatedData = {
       category: newExpense.category,
@@ -145,10 +200,8 @@ const ExpenseTracker = () => {
     };
 
     try {
-      await axios.put(
-        `http://localhost:4000/api/expenses/${editingExpense.id}`,
-        updatedData
-      );
+      setIsUpdating(true);
+      await api.put(`/api/expenses/expenses/${editingExpense.id}`, updatedData);
 
       setExpenses(
         expenses.map((expense) =>
@@ -167,24 +220,45 @@ const ExpenseTracker = () => {
       });
       setShowAddModal(false);
 
-      // Refresh the sums
-      fetchTodayExpenseSum(selectedDate);
-      fetchTodayIncomeSum(selectedDate);
+      // Refresh all data from server to ensure accuracy
+      await Promise.all([
+        fetchTodayExpenseSum(selectedDate),
+        fetchTodayIncomeSum(selectedDate),
+        fetchExpenses(selectedDate)
+      ]);
+      
+      // Show success message
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
       console.error("Failed to update expense:", error);
+      alert("Failed to update expense. Please try again.");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleDeleteExpense = async (id: string) => {
     try {
-      await axios.delete(`/api/expenses/${id}`);
+      setIsUpdating(true);
+      await api.delete(`/api/expenses/expenses/${id}`);
       setExpenses(expenses.filter((expense) => expense.id !== id));
 
-      // Refresh the sums
-      fetchTodayExpenseSum(selectedDate);
-      fetchTodayIncomeSum(selectedDate);
+      // Refresh all data from server to ensure accuracy
+      await Promise.all([
+        fetchTodayExpenseSum(selectedDate),
+        fetchTodayIncomeSum(selectedDate),
+        fetchExpenses(selectedDate)
+      ]);
+      
+      // Show success message
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
       console.error("Failed to delete expense:", error);
+      alert("Failed to delete expense. Please try again.");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -200,27 +274,26 @@ const ExpenseTracker = () => {
   };
 
   const tabItems = [
-    { id: "dashboard", label: "Dashboard", icon: "📊" },
-    { id: "daily", label: "Daily Expenses", icon: "📅" },
-    { id: "monthly", label: "Monthly Overview", icon: "📈" },
-    { id: "stats", label: "Statistics", icon: "📊" },
+    { id: "dashboard", label: "Dashboard", icon: <BarChart3 className="w-4 h-4" /> },
+    { id: "daily", label: "Daily Expenses", icon: <Calendar className="w-4 h-4" /> },
+    { id: "monthly", label: "Monthly Overview", icon: <LineChart className="w-4 h-4" /> },
+    { id: "stats", label: "Statistics", icon: <PieChart className="w-4 h-4" /> },
   ];
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
       {/* Header */}
       <header className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-sm border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+        <div className="w-full px-[60px]">
+          <div className="flex justify-between items-center py-8">
             {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <Image src="/logo.png" alt="logo" width={50} height={50} />
+            <div className="flex items-center space-x-3 -ml-2">
+              <Image src="/logo.png" alt="logo" width={40} height={40} />
               <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>WeSpend</h1>
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-4">
-              
+            <div className="hidden md:flex items-center space-x-6">
               {/* User Info */}
               <div className="flex items-center space-x-3">
                 {user?.imageUrl ? (
@@ -242,7 +315,7 @@ const ExpenseTracker = () => {
               </div>
               
               <ThemeToggle />
- 
+              
               <SignOutButton redirectUrl="/sign-in">
                 <button className={`p-2 ${theme === 'dark' ? 'text-gray-400 hover:text-red-400 hover:bg-gray-700' : 'text-gray-500 hover:text-red-500 hover:bg-red-50'} rounded-lg transition-colors`}>
                   <LogOut className="w-5 h-5" />
@@ -297,7 +370,7 @@ const ExpenseTracker = () => {
         </div>
       </header>
 
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full px-8 py-8">
         {/* Tab Navigation */}
         <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg mb-6`}>
           <div className={`border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -306,13 +379,13 @@ const ExpenseTracker = () => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`py-4 px-3 sm:px-4 border-b-2 font-bold text-sm transition-colors ${
+                  className={`py-4 px-3 sm:px-4 border-b-2 font-bold text-sm transition-colors flex items-center space-x-2 ${
                     activeTab === item.id
                       ? `border-emerald-500 text-emerald-600`
                       : `${theme === 'dark' ? 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`
                   }`}
                 >
-                  <span className="hidden sm:inline mr-2">{item.icon}</span>
+                  <span className="hidden sm:inline">{item.icon}</span>
                   <span className="sm:hidden">{item.icon}</span>
                   <span className="hidden sm:inline">{item.label}</span>
                 </button>
@@ -321,12 +394,30 @@ const ExpenseTracker = () => {
           </div>
 
           {/* Dashboard Tab */}
-          {activeTab === "dashboard" && (
+          {activeTab === "dashboard" && mounted && (
             <div className="p-6">
+              {isUpdating && (
+                <div className={`mb-4 p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-emerald-50'} border ${theme === 'dark' ? 'border-gray-600' : 'border-emerald-200'}`}>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-emerald-700'}`}>Updating data...</span>
+                  </div>
+                </div>
+              )}
+              {showSuccess && (
+                <div className={`mb-4 p-3 rounded-lg ${theme === 'dark' ? 'bg-green-800' : 'bg-green-50'} border ${theme === 'dark' ? 'border-green-600' : 'border-green-200'}`}>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                    <span className={`text-sm ${theme === 'dark' ? 'text-green-300' : 'text-green-700'}`}>Successfully updated! Data refreshed.</span>
+                  </div>
+                </div>
+              )}
               <CustomizableDashboard
                 todayExpenseSum={todayExpenseSum}
                 todayIncomeSum={todayIncomeSum}
                 monthlyBalance={monthlyBalance}
+                monthlyExpenseTotal={monthlyExpenseTotal}
+                monthlyIncome={monthlyIncome}
               />
             </div>
           )}
@@ -388,8 +479,7 @@ const ExpenseTracker = () => {
                 <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   Category
                 </label>
-                <input
-                  type="text"
+                <select
                   value={newExpense.category}
                   onChange={(e) =>
                     setNewExpense({ ...newExpense, category: e.target.value })
@@ -397,8 +487,24 @@ const ExpenseTracker = () => {
                   className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
                     theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'
                   }`}
-                  placeholder="Enter reason..."
-                />
+                >
+                  <option value="">Select category...</option>
+                  {newExpense.type === "income" ? (
+                    <option value="">Income</option>
+                  ) : (
+                    <>
+                      <option value="food">Food</option>
+                      <option value="transport">Transport</option>
+                      <option value="bills">Bills</option>
+                      <option value="entertainment">Entertainment</option>
+                      <option value="medicine">Medicine</option>
+                      <option value="clothing">Clothing</option>
+                      <option value="sanitary">Sanitary</option>
+                      <option value="educational">Educational</option>
+                      <option value="others">Others</option>
+                    </>
+                  )}
+                </select>
               </div>
 
               <div>

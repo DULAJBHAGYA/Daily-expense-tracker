@@ -33,11 +33,36 @@ export default function RootLayout({
         },
       }}
     >
-      <html lang="en" className={poppins.variable}>
+      <html lang="en" className={`${poppins.variable} light`}>
         <head>
           <link rel="icon" href="/favicon.ico" />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  try {
+                    var theme = localStorage.getItem('theme-storage');
+                    if (theme) {
+                      var parsed = JSON.parse(theme);
+                      if (parsed.state && parsed.state.theme) {
+                        document.documentElement.classList.remove('light', 'dark');
+                        document.documentElement.classList.add(parsed.state.theme);
+                        if (parsed.state.theme === 'dark') {
+                          document.body.classList.remove('bg-gray-50');
+                          document.body.classList.add('bg-gray-900');
+                        } else {
+                          document.body.classList.remove('bg-gray-900');
+                          document.body.classList.add('bg-gray-50');
+                        }
+                      }
+                    }
+                  } catch (e) {}
+                })();
+              `,
+            }}
+          />
         </head>
-        <body className="antialiased bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+        <body className="antialiased bg-gray-50 transition-colors duration-200">
           <ClientThemeProvider>
             {children}
           </ClientThemeProvider>

@@ -10,6 +10,7 @@ interface WidgetData {
   changeType?: 'increase' | 'decrease';
   icon?: React.ReactNode;
   color?: string;
+  type?: string;
 }
 
 interface DashboardWidgetProps {
@@ -28,6 +29,11 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   isEditing = false,
 }) => {
   const getChangeColor = (type: 'increase' | 'decrease') => {
+    // For expense widgets, invert the colors (increase = bad = red, decrease = good = green)
+    if (widget.type === 'expense') {
+      return type === 'increase' ? 'text-red-600' : 'text-green-600';
+    }
+    // For other widgets (income, balance, etc.), use normal colors
     return type === 'increase' ? 'text-green-600' : 'text-red-600';
   };
 

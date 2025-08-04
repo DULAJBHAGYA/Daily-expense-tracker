@@ -21,19 +21,25 @@ interface Expense {
 }
 
 const ExpenseTracker = () => {
-  const [todayExpenseSum, setTodayExpenseSum] = useState<number>(0);
-  const [todayIncomeSum, setTodayIncomeSum] = useState<number>(0);
-  const [monthlyIncome] = useState<number>(0);
-  const [monthlyExpenseTotal] = useState<number>(0);
+
+  const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
+  const [monthlyExpenseTotal, setMonthlyExpenseTotal] = useState<number>(0);
+  const [totalEntries, setTotalEntries] = useState<number>(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [statsRefreshTrigger, setStatsRefreshTrigger] = useState<number>(0);
   const [mounted, setMounted] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    setSelectedDate(new Date().toISOString().split("T")[0]);
+    // Get current date in local timezone to avoid timezone issues
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    setSelectedDate(`${year}-${month}-${day}`);
   }, []);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -53,39 +59,7 @@ const ExpenseTracker = () => {
   // const currentMonth = new Date().getMonth() + 1;
   // const currentYear = new Date().getFullYear();
 
-  //fetch today expenses sum
-  const fetchTodayExpenseSum = useCallback(async (dateStr: string) => {
-    const [year, month, day] = dateStr.split("-");
-    const monthNum = parseInt(month, 10);
-    const dayNum = parseInt(day, 10);
-    try {
-      console.log(`Fetching expense sum for ${year}/${monthNum}/${dayNum}`);
-      const res = await api.get(`/api/expenses/sum/expense/${year}/${monthNum}/${dayNum}`);
-      console.log('Expense sum response:', res.data);
-      setTodayExpenseSum(res.data.totalDayExpense || 0);
-    } catch (error) {
-      console.error("Failed to fetch today expense sum:", error);
-      // Set default value if server is not available
-      setTodayExpenseSum(0);
-    }
-  }, []);
 
-  //fetch today incomes sum
-  const fetchTodayIncomeSum = useCallback(async (dateStr: string) => {
-    const [year, month, day] = dateStr.split("-");
-    const monthNum = parseInt(month, 10);
-    const dayNum = parseInt(day, 10);
-    try {
-      console.log(`Fetching income sum for ${year}/${monthNum}/${dayNum}`);
-      const res = await api.get(`/api/expenses/sum/income/${year}/${monthNum}/${dayNum}`);
-      console.log('Income sum response:', res.data);
-      setTodayIncomeSum(res.data.totalDayIncome || 0);
-    } catch (error) {
-      console.error("Failed to fetch today income sum:", error);
-      // Set default value if server is not available
-      setTodayIncomeSum(0);
-    }
-  }, []);
 
   //fetch expenses for the selected date
   const fetchExpenses = useCallback(async (dateStr: string) => {
@@ -103,15 +77,63 @@ const ExpenseTracker = () => {
     }
   }, []);
 
+  //fetch monthly income sum
+  const fetchMonthlyIncomeSum = useCallback(async (dateStr: string) => {
+    const [year, month] = dateStr.split("-");
+    const monthNum = parseInt(month, 10);
+    try {
+      console.log(`Fetching monthly income sum for ${year}/${monthNum}`);
+      const res = await api.get(`/api/expenses/sum/incomes/${year}/${monthNum}`);
+      console.log('Monthly income sum response:', res.data);
+      setMonthlyIncome(res.data.totalIncome || 0);
+    } catch (error) {
+      console.error("Failed to fetch monthly income sum:", error);
+      setMonthlyIncome(0);
+    }
+  }, []);
+
+  //fetch monthly expense sum
+  const fetchMonthlyExpenseSum = useCallback(async (dateStr: string) => {
+    const [year, month] = dateStr.split("-");
+    const monthNum = parseInt(month, 10);
+    try {
+      console.log(`Fetching monthly expense sum for ${year}/${monthNum}`);
+      const res = await api.get(`/api/expenses/sum/expenses/${year}/${monthNum}`);
+      console.log('Monthly expense sum response:', res.data);
+      setMonthlyExpenseTotal(res.data.totalExpense || 0);
+    } catch (error) {
+      console.error("Failed to fetch monthly expense sum:", error);
+      setMonthlyExpenseTotal(0);
+    }
+  }, []);
+
+  //fetch total entries count
+  const fetchTotalEntries = useCallback(async () => {
+    try {
+      console.log('Fetching total entries count');
+      const res = await api.get('/api/expenses');
+      console.log('Total entries response:', res.data);
+      setTotalEntries(Array.isArray(res.data) ? res.data.length : 0);
+    } catch (error) {
+      console.error("Failed to fetch total entries:", error);
+      setTotalEntries(0);
+    }
+  }, []);
+
   useEffect(() => {
     if (mounted && selectedDate) {
-      fetchTodayExpenseSum(selectedDate);
-      fetchTodayIncomeSum(selectedDate);
       fetchExpenses(selectedDate);
+      fetchMonthlyIncomeSum(selectedDate);
+      fetchMonthlyExpenseSum(selectedDate);
+      fetchTotalEntries();
     }
-  }, [mounted, selectedDate, fetchTodayExpenseSum, fetchTodayIncomeSum, fetchExpenses]);
+  }, [mounted, selectedDate, fetchExpenses, fetchMonthlyIncomeSum, fetchMonthlyExpenseSum, fetchTotalEntries]);
 
   const monthlyBalance = monthlyIncome - monthlyExpenseTotal;
+
+  const triggerStatsRefresh = () => {
+    setStatsRefreshTrigger(prev => prev + 1);
+  };
 
   const handleAddExpense = async () => {
     if (!newExpense.amount) {
@@ -145,19 +167,16 @@ const ExpenseTracker = () => {
       });
       setShowAddModal(false);
 
-      // Immediately update sums based on the new entry
-      if (newExpense.type === "expense") {
-        setTodayExpenseSum(prev => prev + parseFloat(newExpense.amount));
-      } else {
-        setTodayIncomeSum(prev => prev + parseFloat(newExpense.amount));
-      }
-
       // Also refresh from server to ensure accuracy
       await Promise.all([
-        fetchTodayExpenseSum(selectedDate),
-        fetchTodayIncomeSum(selectedDate),
-        fetchExpenses(selectedDate)
+        fetchExpenses(selectedDate),
+        fetchMonthlyIncomeSum(selectedDate),
+        fetchMonthlyExpenseSum(selectedDate),
+        fetchTotalEntries()
       ]);
+      
+      // Trigger stats refresh
+      triggerStatsRefresh();
       
       // Show success message
       console.log("Successfully added expense/income");
@@ -222,10 +241,14 @@ const ExpenseTracker = () => {
 
       // Refresh all data from server to ensure accuracy
       await Promise.all([
-        fetchTodayExpenseSum(selectedDate),
-        fetchTodayIncomeSum(selectedDate),
-        fetchExpenses(selectedDate)
+        fetchExpenses(selectedDate),
+        fetchMonthlyIncomeSum(selectedDate),
+        fetchMonthlyExpenseSum(selectedDate),
+        fetchTotalEntries()
       ]);
+      
+      // Trigger stats refresh
+      triggerStatsRefresh();
       
       // Show success message
       setShowSuccess(true);
@@ -246,10 +269,14 @@ const ExpenseTracker = () => {
 
       // Refresh all data from server to ensure accuracy
       await Promise.all([
-        fetchTodayExpenseSum(selectedDate),
-        fetchTodayIncomeSum(selectedDate),
-        fetchExpenses(selectedDate)
+        fetchExpenses(selectedDate),
+        fetchMonthlyIncomeSum(selectedDate),
+        fetchMonthlyExpenseSum(selectedDate),
+        fetchTotalEntries()
       ]);
+      
+      // Trigger stats refresh
+      triggerStatsRefresh();
       
       // Show success message
       setShowSuccess(true);
@@ -413,11 +440,10 @@ const ExpenseTracker = () => {
                 </div>
               )}
               <CustomizableDashboard
-                todayExpenseSum={todayExpenseSum}
-                todayIncomeSum={todayIncomeSum}
                 monthlyBalance={monthlyBalance}
                 monthlyExpenseTotal={monthlyExpenseTotal}
                 monthlyIncome={monthlyIncome}
+                totalEntries={totalEntries}
               />
             </div>
           )}
@@ -439,7 +465,7 @@ const ExpenseTracker = () => {
           )}
 
           {/* Statistics Tab */}
-          {activeTab === "stats" && <Stats />}
+          {activeTab === "stats" && <Stats refreshTrigger={statsRefreshTrigger} />}
         </div>
       </div>
 

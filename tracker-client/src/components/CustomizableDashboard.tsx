@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Settings, Save, X } from 'lucide-react';
+import { Plus, Settings, Save, X, Calendar, BarChart3, PieChart, Activity, Lightbulb, ArrowUpRight } from 'lucide-react';
 import DashboardWidget from './DashboardWidget';
 import { TrendingUp, TrendingDown, Wallet, PiggyBank, Target } from 'lucide-react';
+import { useThemeStore } from '@/utils/theme';
 
 interface WidgetData {
   id: string;
@@ -16,25 +17,24 @@ interface WidgetData {
 }
 
 interface CustomizableDashboardProps {
-  todayExpenseSum: number;
-  todayIncomeSum: number;
   monthlyBalance: number;
   monthlyExpenseTotal: number;
   monthlyIncome: number;
+  totalEntries: number;
   onWidgetChange?: (widgets: WidgetData[]) => void;
 }
 
 const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
-  todayExpenseSum,
-  todayIncomeSum,
   monthlyBalance,
   monthlyExpenseTotal,
   monthlyIncome,
+  totalEntries,
   onWidgetChange,
 }) => {
   const [widgets, setWidgets] = useState<WidgetData[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showAddWidget, setShowAddWidget] = useState(false);
+  const { theme } = useThemeStore();
 
   const [mounted, setMounted] = useState(false);
 
@@ -57,6 +57,40 @@ const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
     return Math.round((savings / monthlyIncome) * 100);
   };
 
+  // Get financial status with enhanced logic
+  const getFinancialStatus = () => {
+    if (!mounted) return { status: 'Loading...', color: 'text-gray-600' };
+    if (monthlyIncome === 0 && monthlyExpenseTotal === 0) {
+      return { status: 'No Data', color: 'text-gray-600' };
+    }
+    
+    const savingsRate = calculateSavingsRate();
+    const balance = monthlyBalance;
+    
+    // Excellent: High savings rate and positive balance
+    if (savingsRate >= 30 && balance > 0) {
+      return { status: 'Excellent', color: 'text-emerald-600' };
+    }
+    
+    // Good: Good savings rate and positive balance
+    if (savingsRate >= 20 && balance > 0) {
+      return { status: 'On Track', color: 'text-green-600' };
+    }
+    
+    // Fair: Positive balance but low savings
+    if (balance >= 0 && savingsRate < 20) {
+      return { status: 'Fair', color: 'text-yellow-600' };
+    }
+    
+    // Over Budget: Negative balance
+    if (balance < 0) {
+      return { status: 'Over Budget', color: 'text-red-600' };
+    }
+    
+    // Default
+    return { status: 'Unknown', color: 'text-gray-600' };
+  };
+
 
 
   // Initialize default widgets
@@ -64,21 +98,21 @@ const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
     if (mounted) {
       const defaultWidgets = [
         {
-          id: 'today-expenses',
-          title: "Today's Expenses",
-          value: todayExpenseSum,
-          change: calculatePercentageChange(todayExpenseSum, monthlyExpenseTotal / 30),
-          changeType: (todayExpenseSum > (monthlyExpenseTotal / 30)) ? 'increase' as const : 'decrease' as const,
+          id: 'monthly-expenses',
+          title: "Monthly Expenses",
+          value: monthlyExpenseTotal,
+          change: calculatePercentageChange(monthlyExpenseTotal, monthlyExpenseTotal * 0.9),
+          changeType: (monthlyExpenseTotal > (monthlyExpenseTotal * 0.9)) ? 'increase' as const : 'decrease' as const,
           icon: <TrendingDown className="w-5 h-5 text-red-500" />,
           color: 'widget-icon-red',
           type: 'expense'
         },
         {
-          id: 'today-incomes',
-          title: "Today's Incomes",
-          value: todayIncomeSum,
-          change: calculatePercentageChange(todayIncomeSum, monthlyIncome / 30),
-          changeType: (todayIncomeSum > (monthlyIncome / 30)) ? 'increase' as const : 'decrease' as const,
+          id: 'monthly-incomes',
+          title: "Monthly Incomes",
+          value: monthlyIncome,
+          change: calculatePercentageChange(monthlyIncome, monthlyIncome * 0.9),
+          changeType: (monthlyIncome > (monthlyIncome * 0.9)) ? 'increase' as const : 'decrease' as const,
           icon: <TrendingUp className="w-5 h-5 text-green-500" />,
           color: 'widget-icon-green',
           type: 'income'
@@ -96,28 +130,28 @@ const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
       ];
       setWidgets(defaultWidgets);
     }
-  }, [mounted, todayExpenseSum, todayIncomeSum, monthlyBalance, monthlyExpenseTotal, monthlyIncome, calculatePercentageChange]);
+  }, [mounted, monthlyExpenseTotal, monthlyIncome, monthlyBalance, calculatePercentageChange]);
 
   const getAvailableWidgets = () => {
     if (!mounted) return [];
     
     return [
       {
-        id: 'today-expenses',
-        title: "Today's Expenses",
-        value: todayExpenseSum,
-        change: calculatePercentageChange(todayExpenseSum, monthlyExpenseTotal / 30),
-        changeType: (todayExpenseSum > (monthlyExpenseTotal / 30)) ? 'increase' as const : 'decrease' as const,
+        id: 'monthly-expenses',
+        title: "Monthly Expenses",
+        value: monthlyExpenseTotal,
+        change: calculatePercentageChange(monthlyExpenseTotal, monthlyExpenseTotal * 0.9),
+        changeType: (monthlyExpenseTotal > (monthlyExpenseTotal * 0.9)) ? 'increase' as const : 'decrease' as const,
         icon: <TrendingDown className="w-5 h-5 text-red-500" />,
         color: 'widget-icon-red',
         type: 'expense'
       },
       {
-        id: 'today-incomes',
-        title: "Today's Incomes",
-        value: todayIncomeSum,
-        change: calculatePercentageChange(todayIncomeSum, monthlyIncome / 30),
-        changeType: (todayIncomeSum > (monthlyIncome / 30)) ? 'increase' as const : 'decrease' as const,
+        id: 'monthly-incomes',
+        title: "Monthly Incomes",
+        value: monthlyIncome,
+        change: calculatePercentageChange(monthlyIncome, monthlyIncome * 0.9),
+        changeType: (monthlyIncome > (monthlyIncome * 0.9)) ? 'increase' as const : 'decrease' as const,
         icon: <TrendingUp className="w-5 h-5 text-green-500" />,
         color: 'widget-icon-green',
         type: 'income'
@@ -185,9 +219,125 @@ const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className={`p-6 rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="p-2 bg-emerald-100 dark:bg-emerald-900 rounded-lg">
+            <Activity className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div>
+            <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+              Welcome to WeSpend
+            </h1>
+            <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              Track your finances and stay on top of your budget
+            </p>
+          </div>
+        </div>
+        
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
+            <div className="flex items-center space-x-2">
+              <Calendar className="w-4 h-4 text-emerald-500" />
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Current Month</span>
+            </div>
+            <p className={`text-lg font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'} mt-1`}>
+              {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </p>
+          </div>
+          
+          <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
+            <div className="flex items-center space-x-2">
+              <BarChart3 className="w-4 h-4 text-blue-500" />
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Total Entries</span>
+            </div>
+            <p className={`text-lg font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'} mt-1`}>
+              {totalEntries > 0 ? `${totalEntries} entries` : 'No entries yet'}
+            </p>
+          </div>
+          
+          <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
+            <div className="flex items-center space-x-2">
+              <PieChart className="w-4 h-4 text-purple-500" />
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Status</span>
+            </div>
+            <p className={`text-lg font-bold ${getFinancialStatus().color} mt-1`}>
+              {getFinancialStatus().status}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress and Insights Section */}
+      {(monthlyExpenseTotal > 0 || monthlyIncome > 0) && (
+        <div className={`p-6 rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+          <h3 className={`text-lg font-bold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+            Monthly Progress
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Income vs Expenses Progress */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Income vs Expenses
+                </span>
+                <span className={`text-sm font-bold ${monthlyBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {monthlyBalance >= 0 ? '+' : ''}{monthlyBalance.toFixed(2)} LKR
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    monthlyBalance >= 0 ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                  style={{ 
+                    width: `${Math.min(100, Math.max(0, (monthlyIncome / (monthlyIncome + monthlyExpenseTotal)) * 100))}%` 
+                  }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-xs mt-1">
+                <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Income: {monthlyIncome.toFixed(2)} LKR
+                </span>
+                <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Expenses: {monthlyExpenseTotal.toFixed(2)} LKR
+                </span>
+              </div>
+            </div>
+            
+            {/* Savings Rate */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Savings Rate
+                </span>
+                <span className={`text-sm font-bold ${calculateSavingsRate() >= 20 ? 'text-green-600' : 'text-yellow-600'}`}>
+                  {calculateSavingsRate()}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    calculateSavingsRate() >= 20 ? 'bg-green-500' : 'bg-yellow-500'
+                  }`}
+                  style={{ width: `${Math.min(100, calculateSavingsRate())}%` }}
+                ></div>
+              </div>
+              <div className="text-xs mt-1">
+                <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Target: 20% | Current: {calculateSavingsRate()}%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Dashboard Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-        <h2 className="text-xl font-bold dashboard-header">Dashboard</h2>
+        <h2 className="text-xl font-bold dashboard-header">Financial Overview</h2>
         
         <div className="flex items-center space-x-2">
           {isEditing && (
@@ -226,17 +376,74 @@ const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
 
       {/* Widgets Grid */}
       {mounted && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-transparent">
-          {widgets.map((widget) => (
-            <DashboardWidget
-              key={widget.id}
-              widget={widget}
-              onRemove={isEditing ? handleRemoveWidget : undefined}
-              onEdit={isEditing ? handleEditWidget : undefined}
-              isEditing={isEditing}
-            />
-          ))}
-        </div>
+        <>
+          {widgets.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-transparent">
+              {widgets.map((widget) => (
+                <DashboardWidget
+                  key={widget.id}
+                  widget={widget}
+                  onRemove={isEditing ? handleRemoveWidget : undefined}
+                  onEdit={isEditing ? handleEditWidget : undefined}
+                  isEditing={isEditing}
+                />
+              ))}
+            </div>
+          ) : (
+            /* Empty State */
+            <div className={`p-8 rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} text-center`}>
+              <div className="p-4 bg-emerald-100 dark:bg-emerald-900 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Lightbulb className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                Start Tracking Your Finances
+              </h3>
+              <p className={`text-sm mb-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                Add your first expense or income entry to see your financial overview here
+              </p>
+              
+              {/* Quick Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto">
+                <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'} hover:shadow-md transition-shadow cursor-pointer`}>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
+                      <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className={`font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Add Expense</p>
+                      <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Track your spending</p>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-gray-400 ml-auto" />
+                  </div>
+                </div>
+                
+                <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'} hover:shadow-md transition-shadow cursor-pointer`}>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                      <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className={`font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Add Income</p>
+                      <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Record your earnings</p>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-gray-400 ml-auto" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Tips Section */}
+              <div className={`mt-8 p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
+                <h4 className={`font-medium mb-2 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>💡 Pro Tips</h4>
+                <ul className={`text-sm space-y-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <li>• Add expenses daily to stay on track</li>
+                  <li>• Categorize your spending for better insights</li>
+                  <li>• Set monthly budget goals</li>
+                  <li>• Review your spending patterns regularly</li>
+                </ul>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Add Widget Modal */}

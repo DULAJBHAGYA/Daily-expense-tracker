@@ -29,9 +29,45 @@ const DailyExpenses: React.FC<DailyExpensesProps> = ({
   onDeleteExpense,
 }) => {
   const [dailyExpenses, setDailyExpenses] = useState<Expense[]>([]);
+  const [dailyIncomeTotal, setDailyIncomeTotal] = useState<number>(0);
+  const [dailyExpenseTotal, setDailyExpenseTotal] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useThemeStore();
+
+  const fetchDailyIncomeTotal = async (date: string) => {
+    if (!date) return;
+    
+    try {
+      const dateObj = new Date(date);
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth() + 1;
+      const day = dateObj.getDate();
+
+      const response = await api.get(`/api/expenses/sum/income/${year}/${month}/${day}`);
+      setDailyIncomeTotal(response.data.totalDayIncome || 0);
+    } catch (err) {
+      console.error("Error fetching daily income total:", err);
+      setDailyIncomeTotal(0);
+    }
+  };
+
+  const fetchDailyExpenseTotal = async (date: string) => {
+    if (!date) return;
+    
+    try {
+      const dateObj = new Date(date);
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth() + 1;
+      const day = dateObj.getDate();
+
+      const response = await api.get(`/api/expenses/sum/expense/${year}/${month}/${day}`);
+      setDailyExpenseTotal(response.data.totalDayExpense || 0);
+    } catch (err) {
+      console.error("Error fetching daily expense total:", err);
+      setDailyExpenseTotal(0);
+    }
+  };
 
   const fetchEntriesByDate = async (date: string) => {
     if (!date) return;
@@ -66,6 +102,8 @@ const DailyExpenses: React.FC<DailyExpensesProps> = ({
 
   useEffect(() => {
     fetchEntriesByDate(selectedDate);
+    fetchDailyIncomeTotal(selectedDate);
+    fetchDailyExpenseTotal(selectedDate);
   }, [selectedDate]);
 
   return (
@@ -73,6 +111,43 @@ const DailyExpenses: React.FC<DailyExpensesProps> = ({
       <h2 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
         Daily Expenses
       </h2>
+      
+      {/* Daily Totals Display */}
+      <div className={`mb-6 p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
+            <div className="flex items-center justify-between">
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                Daily Income
+              </span>
+              <span className="text-lg font-bold text-green-600">
+                {dailyIncomeTotal.toFixed(2)} LKR
+              </span>
+            </div>
+          </div>
+          <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
+            <div className="flex items-center justify-between">
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                Daily Expenses
+              </span>
+              <span className="text-lg font-bold text-red-600">
+                {dailyExpenseTotal.toFixed(2)} LKR
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className={`mt-3 pt-3 border-t ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
+          <div className="flex items-center justify-between">
+            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              Daily Balance
+            </span>
+            <span className={`text-lg font-bold ${(dailyIncomeTotal - dailyExpenseTotal) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {(dailyIncomeTotal - dailyExpenseTotal).toFixed(2)} LKR
+            </span>
+          </div>
+        </div>
+      </div>
+      
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-4 w-full sm:w-auto">
           <Calendar className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} />

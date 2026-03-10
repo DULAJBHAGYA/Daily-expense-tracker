@@ -25,7 +25,9 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false, // Disable for faster builds
   // Enable React strict mode
   reactStrictMode: true,
-  // Add webpack configuration if needed
+  // Enable Turbopack (Next.js 16 default)
+  turbopack: {},
+  // Add webpack configuration for backward compatibility
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {

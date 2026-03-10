@@ -154,28 +154,23 @@ const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
     ];
   }, [mounted, monthlyExpenseTotal, monthlyIncome, monthlyBalance, calculatePercentageChange, calculateSavingsRate]);
 
-
-
-  // Initialize widgets - load from localStorage or use defaults
+  // Initialize widgets - load from localStorage or use defaults (only once on mount)
   useEffect(() => {
     if (mounted) {
       const savedWidgetIds = localStorage.getItem('dashboard-widget-ids');
-      const availableWidgets = getAvailableWidgets();
       
       if (savedWidgetIds) {
         try {
           const widgetIds = JSON.parse(savedWidgetIds) as string[];
-          // Rebuild widgets with current data based on saved IDs
-          const restoredWidgets: WidgetData[] = [];
-          widgetIds.forEach((id: string) => {
-            const widget = availableWidgets.find(w => w.id === id);
-            if (widget) {
-              restoredWidgets.push(widget);
-            }
-          });
-          
-          if (restoredWidgets.length > 0) {
-            setWidgets(restoredWidgets);
+          if (widgetIds.length > 0) {
+            // Just set the IDs, the update effect will fill in the data
+            const initialWidgets = widgetIds.map(id => ({
+              id,
+              title: '',
+              value: 0,
+              type: id
+            }));
+            setWidgets(initialWidgets);
             return;
           }
         } catch (error) {
@@ -183,19 +178,31 @@ const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
         }
       }
       
-      // If no saved widgets or error, use default widgets
-      const defaultWidgets: WidgetData[] = [];
+      // If no saved widgets or error, use default widget IDs
       const defaultIds = ['monthly-expenses', 'monthly-incomes', 'monthly-balance'];
-      defaultIds.forEach(id => {
-        const widget = availableWidgets.find(w => w.id === id);
-        if (widget) {
-          defaultWidgets.push(widget);
-        }
-      });
-      
+      const defaultWidgets = defaultIds.map(id => ({
+        id,
+        title: '',
+        value: 0,
+        type: id
+      }));
       setWidgets(defaultWidgets);
     }
-  }, [mounted, monthlyExpenseTotal, monthlyIncome, monthlyBalance, calculatePercentageChange, getAvailableWidgets]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]);
+
+  // Update widget data when props change (separate from initialization)
+  useEffect(() => {
+    if (mounted && widgets.length > 0) {
+      const availableWidgets = getAvailableWidgets();
+      const updatedWidgets = widgets.map(widget => {
+        const availableWidget = availableWidgets.find(w => w.id === widget.id);
+        return availableWidget || widget;
+      });
+      setWidgets(updatedWidgets);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthlyExpenseTotal, monthlyIncome, monthlyBalance, mounted]);
 
   const handleAddWidget = (widgetType: string) => {
     const availableWidgets = getAvailableWidgets();

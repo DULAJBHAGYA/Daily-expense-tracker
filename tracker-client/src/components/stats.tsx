@@ -364,31 +364,36 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
     };
 
     fetchData();
-  }, [mounted, fetchMonthlySummary, fetchYearlyExpenses, fetchMonthlyNetBalance, fetchIncomeVsExpenseData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]);
 
   // Separate useEffect for pie chart - only refetch when pie chart dates change
   useEffect(() => {
     if (!mounted) return;
     fetchMonthlySummary();
-  }, [selectedPieMonth, selectedPieYear, mounted, fetchMonthlySummary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPieMonth, selectedPieYear, mounted]);
 
   // Separate useEffect for yearly expenses - only refetch when expense year changes
   useEffect(() => {
     if (!mounted) return;
     fetchYearlyExpenses();
-  }, [selectedExpenseYear, mounted, fetchYearlyExpenses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedExpenseYear, mounted]);
 
   // Separate useEffect for monthly balance - only refetch when balance dates change
   useEffect(() => {
     if (!mounted) return;
     fetchMonthlyNetBalance();
-  }, [selectedBalanceMonth, selectedBalanceYear, mounted, fetchMonthlyNetBalance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBalanceMonth, selectedBalanceYear, mounted]);
 
   // Separate useEffect for income vs expense trend - only refetch when trend year changes
   useEffect(() => {
     if (!mounted) return;
     fetchIncomeVsExpenseData();
-  }, [selectedTrendYear, mounted, fetchIncomeVsExpenseData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTrendYear, mounted]);
 
   // Refresh all data when refreshTrigger changes (from parent component)
   useEffect(() => {
@@ -405,7 +410,8 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
       const timer = setTimeout(() => setShowRefreshIndicator(false), 2000);
       return () => clearTimeout(timer);
     });
-  }, [refreshTrigger, mounted, fetchMonthlySummary, fetchYearlyExpenses, fetchMonthlyNetBalance, fetchIncomeVsExpenseData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger, mounted]);
 
   if (loading) {
     return (

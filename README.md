@@ -2,19 +2,19 @@
 
 A modern, responsive expense tracking application with dark mode, customizable dashboard widgets, real-time updates, and mobile-optimized design.
 
-## 🚀 Features
+## Features
 
-### ✨ New Features Added
-- **🌙 Dark Mode Toggle**: Switch between light and dark themes with persistent preference
-- **📊 Customizable Dashboard Widgets**: Add, remove, and customize dashboard widgets
-- **📱 Mobile-Responsive Design**: Optimized for all screen sizes with touch-friendly interface
-- **🎨 Modern UI**: Beautiful, accessible design with smooth transitions
-- **⚡ Real-Time Updates**: Instant data updates without page reloads
-- **🔔 Smart Notifications**: Success and error notifications with visual feedback
-- **📈 Enhanced Analytics**: Real-time calculations and percentage changes
-- **🎯 Interactive Landing Page**: Engaging landing page with animated elements
+### New Features Added
+- **Dark Mode Toggle**: Switch between light and dark themes with persistent preference
+- **Customizable Dashboard Widgets**: Add, remove, and customize dashboard widgets
+- **Mobile-Responsive Design**: Optimized for all screen sizes with touch-friendly interface
+- **Modern UI**: Beautiful, accessible design with smooth transitions
+- **Real-Time Updates**: Instant data updates without page reloads
+- **Smart Notifications**: Success and error notifications with visual feedback
+- **Enhanced Analytics**: Real-time calculations and percentage changes
+- **Interactive Landing Page**: Engaging landing page with animated elements
 
-### 📈 Core Features
+### Core Features
 - **Daily Expense Tracking**: Add, edit, and delete expenses with categories
 - **Income Tracking**: Track both expenses and income
 - **Monthly Overview**: View monthly summaries and trends
@@ -24,7 +24,7 @@ A modern, responsive expense tracking application with dark mode, customizable d
 - **Category Management**: Predefined categories with validation
 - **Data Persistence**: All data saved to MongoDB
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - **Next.js 15** with TypeScript
@@ -41,7 +41,7 @@ A modern, responsive expense tracking application with dark mode, customizable d
 - **CORS** enabled for cross-origin requests
 - **RESTful API** with comprehensive endpoints
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js (v18 or higher)
@@ -69,20 +69,44 @@ A modern, responsive expense tracking application with dark mode, customizable d
 
 3. **Environment Setup**
    
-   Create `.env` files in both directories:
-   
-   **tracker-server/.env:**
-   ```env
-   MONGODB_URI=your_mongodb_connection_string
-   NODE_ENV=development
-   PORT=4000
+   **Backend Setup (tracker-server):**
+   ```bash
+   cd tracker-server
+   cp .env.example .env
    ```
    
-   **tracker-client/.env.local:**
+   Edit `tracker-server/.env` and add your MongoDB connection string:
    ```env
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+   PORT=4000
+   MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
+   ```
+   
+   **Frontend Setup (tracker-client):**
+   ```bash
+   cd tracker-client
+   cp .env.example .env.local
+   ```
+   
+   Edit `tracker-client/.env.local` and add your configuration:
+   ```env
+   # Clerk Authentication - Get from https://dashboard.clerk.com
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_key_here
+   CLERK_SECRET_KEY=sk_test_your_key_here
+   
+   # API Base URL
    NEXT_PUBLIC_API_URL=http://localhost:4000
    ```
+
+4. **Get Required API Keys**
+   
+   **MongoDB:**
+   - Sign up at [MongoDB Atlas](https://cloud.mongodb.com/)
+   - Create a cluster and get your connection string
+   
+   **Clerk Authentication:**
+   - Sign up at [Clerk](https://clerk.com/)
+   - Create an application
+   - Copy your Publishable Key and Secret Key from the API Keys section
 
 ### Running the Application
 
@@ -107,16 +131,16 @@ npm run dev
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:4000
 
-## 🎯 Features in Detail
+## Features in Detail
 
-### 🌙 Dark Mode
+### Dark Mode
 - Toggle between light and dark themes
 - Persistent theme preference using localStorage
 - Smooth transitions and animations
 - Optimized colors for both themes
 - Automatic theme detection
 
-### 📊 Customizable Dashboard
+### Customizable Dashboard
 - **Widget Types**: 
   - Today's Expenses
   - Today's Incomes
@@ -128,28 +152,28 @@ npm run dev
 - **Persistent Layout**: Widget configurations are saved
 - **Interactive Elements**: Hover effects and animations
 
-### ⚡ Real-Time Updates
+### Real-Time Updates
 - **Instant UI Updates**: Changes appear immediately without reload
 - **Optimistic Updates**: UI updates before server confirmation
 - **Server Synchronization**: Ensures data accuracy
 - **Loading States**: Visual feedback during operations
 - **Success Notifications**: Confirmation messages for user actions
 
-### �� Mobile Responsive
+### Mobile Responsive
 - **Mobile-First Design**: Optimized for small screens
 - **Touch-Friendly**: Larger touch targets and better spacing
 - **Responsive Charts**: Charts adapt to screen size
 - **Collapsible Navigation**: Mobile menu with hamburger icon
 - **Card vs Table Views**: Mobile shows cards, desktop shows tables
 
-### 🎨 Enhanced Landing Page
+### Enhanced Landing Page
 - **Animated Background**: Blob animations and gradient effects
 - **Interactive Elements**: Floating cards and mobile preview
 - **Green Blob Background**: Dynamic background elements
 - **Professional Design**: Modern, attractive interface
 - **Call-to-Action**: Clear "Get Started" button
 
-## 📱 Mobile Features
+## Mobile Features
 
 ### Responsive Design
 - **Breakpoints**: sm (640px), md (768px), lg (1024px), xl (1280px)
@@ -163,7 +187,7 @@ npm run dev
 - **Touch Gestures**: Swipe-friendly interface
 - **Responsive Typography**: Text scales appropriately
 
-## 🎨 UI/UX Improvements
+## UI/UX Improvements
 
 ### Accessibility
 - **Keyboard Navigation**: Full keyboard support
@@ -184,7 +208,7 @@ npm run dev
 - **Success Indicators**: Green checkmarks and notifications
 - **Error Handling**: Clear error messages and retry options
 
-## 🔧 Development
+## Development
 
 ### Project Structure
 ```
@@ -240,7 +264,7 @@ Daily-expense-tracker/
 - Conditional rendering for mobile/desktop views
 - Touch-friendly interactions
 
-## 🚀 Deployment
+## Deployment
 
 ### Frontend (Vercel/Netlify)
 ```bash
@@ -254,11 +278,11 @@ cd tracker-server
 npm start
 ```
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -266,18 +290,18 @@ This project is licensed under the MIT License.
 4. Test thoroughly
 5. Submit a pull request
 
-## 🎯 Recent Updates
+## Recent Updates
 
 ### Version 2.0 Features
-- ✅ **Real-Time Updates**: Instant data synchronization
-- ✅ **Enhanced Landing Page**: Beautiful, interactive design
-- ✅ **Improved Mobile Experience**: Better responsive design
-- ✅ **Smart Notifications**: User feedback for all operations
-- ✅ **Performance Optimizations**: Faster loading and updates
-- ✅ **Better Error Handling**: Graceful error management
-- ✅ **Category Validation**: Proper category management
-- ✅ **Loading States**: Visual feedback during operations
+- **Real-Time Updates**: Instant data synchronization
+- **Enhanced Landing Page**: Beautiful, interactive design
+- **Improved Mobile Experience**: Better responsive design
+- **Smart Notifications**: User feedback for all operations
+- **Performance Optimizations**: Faster loading and updates
+- **Better Error Handling**: Graceful error management
+- **Category Validation**: Proper category management
+- **Loading States**: Visual feedback during operations
 
 ---
 
-**WeSpend** - Take control of your finances with style! 💰✨
+**WeSpend** - Take control of your finances with style!

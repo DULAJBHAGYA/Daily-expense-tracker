@@ -498,3 +498,165 @@ exports.getMonthlyIncomeAndExpenseFromJune2025 = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.getMonthlyIncomeAndExpenseFromMarch2026 = async (req, res) => {
+  try {
+    const start = new Date(Date.UTC(2026, 2, 1)); // March = month 2 (0-indexed)
+    
+    const now = new Date();
+    const end = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1)); // Start of next month
+
+    const data = await Expense.aggregate([
+      {
+        $match: {
+          date: { $gte: start, $lt: end },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$date" },
+            month: { $month: "$date" },
+            type: "$type",
+          },
+          total: { $sum: "$amount" },
+        },
+      },
+      {
+        $sort: {
+          "_id.year": 1,
+          "_id.month": 1,
+        },
+      },
+    ]);
+
+    // Month names map
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    // Prepare default monthly data
+    const monthlyData = [];
+
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-indexed
+
+    for (let year = 2026; year <= currentYear; year++) {
+      const startMonth = year === 2026 ? 2 : 0; // March = 2 (0-indexed)
+      const endMonth = year === currentYear ? currentMonth : 11;
+
+      for (let m = startMonth; m <= endMonth; m++) {
+        monthlyData.push({
+          year,
+          month: monthNames[m],
+          income: 0,
+          expense: 0,
+        });
+      }
+    }
+
+    data.forEach(({ _id, total }) => {
+      const target = monthlyData.find(
+        (entry) => entry.year === _id.year && entry.month === monthNames[_id.month - 1]
+      );
+
+      if (target) {
+        if (_id.type === "income") target.income = total;
+        else if (_id.type === "expense") target.expense = total;
+      }
+    });
+
+    res.json({ from: "March 2026", to: `${monthNames[currentMonth]} ${currentYear}`, data: monthlyData });
+  } catch (error) {
+    console.error("Error fetching monthly income/expenses:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get monthly income and expenses for a specific year (full year from January)
+exports.getMonthlyIncomeAndExpenseByYear = async (req, res) => {
+  try {
+    const { year } = req.params;
+    const targetYear = parseInt(year);
+
+    if (isNaN(targetYear)) {
+      return res.status(400).json({ message: "Invalid year parameter" });
+    }
+
+    const start = new Date(Date.UTC(targetYear, 0, 1)); // January 1st of target year
+    
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-indexed
+
+    // End date: if target year is current year, use current month; otherwise full year
+    let end;
+    if (targetYear === currentYear) {
+      end = new Date(Date.UTC(currentYear, currentMonth + 1, 1)); // Start of next month
+    } else if (targetYear < currentYear) {
+      end = new Date(Date.UTC(targetYear + 1, 0, 1)); // January 1st of next year
+    } else {
+      // Future year - return empty data
+      return res.json({ year: targetYear, data: [] });
+    }
+
+    const data = await Expense.aggregate([
+      {
+        $match: {
+          date: { $gte: start, $lt: end },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$date" },
+            month: { $month: "$date" },
+            type: "$type",
+          },
+          total: { $sum: "$amount" },
+        },
+      },
+      {
+        $sort: {
+          "_id.month": 1,
+        },
+      },
+    ]);
+
+    // Month names map
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    // Prepare default monthly data
+    const monthlyData = [];
+    const lastMonth = targetYear === currentYear ? currentMonth : 11;
+
+    for (let m = 0; m <= lastMonth; m++) {
+      monthlyData.push({
+        year: targetYear,
+        month: monthNames[m],
+        income: 0,
+        expense: 0,
+      });
+    }
+
+    // Fill in the actual data
+    data.forEach(({ _id, total }) => {
+      const monthIndex = _id.month - 1; // Convert to 0-indexed
+      const target = monthlyData[monthIndex];
+
+      if (target) {
+        if (_id.type === "income") target.income = total;
+        else if (_id.type === "expense") target.expense = total;
+      }
+    });
+
+    res.json({ year: targetYear, data: monthlyData });
+  } catch (error) {
+    console.error("Error fetching yearly income/expenses:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

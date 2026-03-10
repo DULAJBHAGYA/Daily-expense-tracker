@@ -43,7 +43,7 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
 
   return (
     <div
-      className={`relative dashboard-widget rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 transition-all duration-200 ${
+      className={`relative dashboard-widget bg-gray-50  rounded-2xl p-6 transition-all duration-200 ${
         isDragging ? 'opacity-50 scale-95' : ''
       } ${isEditing ? 'ring-2 ring-blue-500' : ''}`}
     >
@@ -51,7 +51,7 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           {widget.icon && (
-            <div className={`p-2 rounded-lg ${widget.color || 'bg-blue-100 dark:bg-blue-900'}`}>
+            <div className={`p-2 rounded-lg ${widget.color || 'bg-blue-100'}`}>
               {widget.icon}
             </div>
           )}
@@ -62,7 +62,7 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
           <div className="flex items-center space-x-1">
             <button
               onClick={() => onEdit?.(widget.id)}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
             >
               <Settings className="w-4 h-4" />
             </button>
@@ -94,7 +94,7 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
 
       {/* Drag Handle */}
       {isEditing && (
-        <div className="absolute top-2 right-2 cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <div className="absolute top-2 right-2 cursor-move text-gray-400 hover:text-gray-600">
           <Move className="w-4 h-4" />
         </div>
       )}

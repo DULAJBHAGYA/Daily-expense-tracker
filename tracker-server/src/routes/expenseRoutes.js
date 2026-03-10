@@ -24,5 +24,8 @@ router.get('/expense-summary/:year/:month', expenseController.getExpenseSummaryB
 router.get('/yearly-expenses/:year', expenseController.getYearlyMonthlyExpenses); //get expenses of all months in a year
 
 router.get('/summary/june-2025', expenseController.getMonthlyIncomeAndExpenseFromJune2025); //get monthly expenses and incomes from june 2025
+router.get('/summary/march-2026', expenseController.getMonthlyIncomeAndExpenseFromMarch2026); //get monthly expenses and incomes from march 2026
+
+router.get('/income-expense-by-year/:year', expenseController.getMonthlyIncomeAndExpenseByYear); //get monthly income and expenses for a specific year
 
 module.exports = router;

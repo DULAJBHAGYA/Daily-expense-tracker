@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Calendar, Plus, Edit3, Trash2 } from "lucide-react";
+import { Edit3, Trash2 } from "lucide-react";
 import api from "@/utils/api";
-import { useThemeStore } from "@/utils/theme";
+import { FiEdit, FiPlus } from "react-icons/fi";
+import { FaRegCalendar, FaRegTrashAlt } from "react-icons/fa";
 
 interface Expense {
   id: string;
@@ -33,7 +34,6 @@ const DailyExpenses: React.FC<DailyExpensesProps> = ({
   const [dailyExpenseTotal, setDailyExpenseTotal] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { theme } = useThemeStore();
 
   const fetchDailyIncomeTotal = async (date: string) => {
     if (!date) return;
@@ -108,40 +108,40 @@ const DailyExpenses: React.FC<DailyExpensesProps> = ({
 
   return (
     <div className="p-4 sm:p-6">
-      <h2 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+      <h2 className="text-xl font-semibold mb-4 text-gray-900">
         Daily Expenses
       </h2>
       
       {/* Daily Totals Display */}
-      <div className={`mb-6 p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className="mb-6 p-4 rounded-2xl bg-gray-50 border border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
+          <div className="p-3 rounded-xl bg-white border border-gray-200">
             <div className="flex items-center justify-between">
-              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              <span className="text-sm font-medium text-gray-600">
                 Daily Income
               </span>
-              <span className="text-lg font-bold text-green-600">
+              <span className="text-lg font-bold text-[#15994e]">
                 {dailyIncomeTotal.toFixed(2)} LKR
               </span>
             </div>
           </div>
-          <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
+          <div className="p-3 rounded-xl bg-white border border-gray-200">
             <div className="flex items-center justify-between">
-              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+              <span className="text-sm font-medium text-gray-600">
                 Daily Expenses
               </span>
-              <span className="text-lg font-bold text-red-600">
+              <span className="text-lg font-bold text-red-700">
                 {dailyExpenseTotal.toFixed(2)} LKR
               </span>
             </div>
           </div>
         </div>
-        <div className={`mt-3 pt-3 border-t ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
+        <div className="mt-3 pt-3 border-t border-gray-200">
           <div className="flex items-center justify-between">
-            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+            <span className="text-sm font-medium text-gray-600">
               Daily Balance
             </span>
-            <span className={`text-lg font-bold ${(dailyIncomeTotal - dailyExpenseTotal) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <span className={`text-lg font-bold ${(dailyIncomeTotal - dailyExpenseTotal) >= 0 ? 'text-[#15994e]' : 'text-red-700'}`}>
               {(dailyIncomeTotal - dailyExpenseTotal).toFixed(2)} LKR
             </span>
           </div>
@@ -150,28 +150,26 @@ const DailyExpenses: React.FC<DailyExpensesProps> = ({
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-4 w-full sm:w-auto">
-          <Calendar className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} />
+          <FaRegCalendar className="w-5 h-5 text-gray-700" />
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className={`border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 flex-1 sm:flex-none ${
-              theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'
-            }`}
+            className="border rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-[#15994e] flex-1 sm:flex-none bg-white border-gray-300 text-gray-900"
           />
         </div>
         <button
           onClick={onAddClick}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors w-full sm:w-auto justify-center"
+          className="bg-[#15994e] hover:bg-[#137a3d] text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors w-full sm:w-auto justify-center"
         >
-          <Plus className="w-4 h-4" />
-          <span className="font-bold">Add New</span>
+          <FiPlus className="w-4 h-4" />
+          <span className="font-semibold">Add New</span>
         </button>
       </div>
 
       {/* Loading */}
       {loading && (
-        <p className={`text-center mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+        <p className="text-center mb-4 text-gray-500">
           Loading entries...
         </p>
       )}
@@ -186,32 +184,32 @@ const DailyExpenses: React.FC<DailyExpensesProps> = ({
       {/* Mobile Card View */}
       <div className="block sm:hidden">
         {!loading && dailyExpenses.length === 0 ? (
-          <div className={`text-center py-8 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+          <div className="text-center py-8 text-gray-500">
             No expenses found for this date
           </div>
         ) : (
           <div className="space-y-4">
-            {dailyExpenses.map((expense) => (
+            {dailyExpenses.map((expense, index) => (
               <div
-                key={expense.id}
-                className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+                key={expense.id || `expense-${index}`}
+                className="p-4 rounded-xl border bg-white border-gray-200"
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    expense.type === "income" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                    expense.type === "income" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                   }`}>
                     {expense.type === "income" ? "Income" : "Expense"}
                   </span>
                   <div className="flex space-x-2">
                     <button
                       onClick={() => onEditExpense(expense)}
-                      className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300 p-1 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded"
+                      className="text-[#15994e] hover:text-[#137a3d] p-1 hover:bg-[#d1fae5] rounded-xl"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(expense.id)}
-                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                      className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded-xl"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -219,13 +217,13 @@ const DailyExpenses: React.FC<DailyExpensesProps> = ({
                 </div>
                 
                 <div className="space-y-1">
-                  <div className={`font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <div className="font-medium text-gray-900">
                     {expense.category.toUpperCase()}
                   </div>
                   <div className={`text-sm ${expense.type === "income" ? "text-green-600" : "text-red-600"}`}>
                     {expense.amount.toFixed(2)} LKR
                   </div>
-                  <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} truncate`}>
+                  <div className="text-sm text-gray-500 truncate">
                     {expense.description}
                   </div>
                 </div>
@@ -237,57 +235,57 @@ const DailyExpenses: React.FC<DailyExpensesProps> = ({
 
       {/* Desktop Table View */}
       <div className="hidden sm:block overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
             <tr>
-              <th className={`px-6 py-3 text-left text-sm font-bold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Type</th>
-              <th className={`px-6 py-3 text-left text-sm font-bold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Category</th>
-              <th className={`px-6 py-3 text-left text-sm font-bold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Amount</th>
-              <th className={`px-6 py-3 text-left text-sm font-bold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Description</th>
-              <th className={`px-6 py-3 text-left text-sm font-bold uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Actions</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold  text-gray-500">Type</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold  text-gray-500">Category</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold  text-gray-500">Amount</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold  text-gray-500">Description</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold  text-gray-500">Actions</th>
             </tr>
           </thead>
-          <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700 bg-gray-900' : 'divide-gray-200 bg-white'}`}>
+          <tbody className="divide-y divide-gray-200 bg-white">
             {!loading && dailyExpenses.length === 0 ? (
               <tr>
-                <td colSpan={5} className={`px-6 py-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                   No expenses found for this date
                 </td>
               </tr>
             ) : (
-              dailyExpenses.map((expense) => (
-                <tr key={expense.id} className={`hover:${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
+              dailyExpenses.map((expense, index) => (
+                <tr key={expense.id || `expense-${index}`} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      expense.type === "income" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                      expense.type === "income" ? "bg-green-100 text-[#15994e]" : "bg-red-100 text-red-700"
                     }`}>
                       {expense.type === "income" ? "Income" : "Expense"}
                     </span>
                   </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
-                    {expense.category.toUpperCase()}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {expense.category}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={expense.type === "income" ? "text-green-600" : "text-red-600"}>
+                    <span className={expense.type === "income" ? "text-[#15994e]" : "text-red-600"}>
                       {expense.amount.toFixed(2)} LKR
                     </span>
                   </td>
-                  <td className={`px-6 py-4 text-sm max-w-xs truncate ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <td className="px-6 py-4 text-sm max-w-xs truncate text-gray-500">
                     {expense.description}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <button
                         onClick={() => onEditExpense(expense)}
-                        className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300 p-1 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded"
+                        className="text-[#15994e] hover:text-[#0f6f3a] p-1 hover:bg-[#e6f4ea] rounded"
                       >
-                        <Edit3 className="w-4 h-4" />
+                        <FiEdit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(expense.id)}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                        className="text-red-700 hover:text-red-900 p-1 hover:bg-red-50 rounded"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <FaRegTrashAlt className="w-4 h-4" />
                       </button>
                     </div>
                   </td>

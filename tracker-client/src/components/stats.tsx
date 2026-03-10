@@ -11,8 +11,8 @@ import {
   LineElement,
   Title,
 } from "chart.js";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import api from "@/utils/api";
-import { useThemeStore } from "@/utils/theme";
 
 ChartJS.register(
   ArcElement,
@@ -85,10 +85,23 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
   const [serverAvailable, setServerAvailable] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [showRefreshIndicator, setShowRefreshIndicator] = useState(false);
-  const { theme } = useThemeStore();
+
+  // Individual loading states for each section
+  const [pieLoading, setPieLoading] = useState(false);
+  const [lineLoading, setLineLoading] = useState(false);
+  const [trendLoading, setTrendLoading] = useState(false);
+  const [balanceLoading, setBalanceLoading] = useState(false);
 
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
+
+  // State for user-selected dates
+  const [selectedPieMonth, setSelectedPieMonth] = useState(currentMonth);
+  const [selectedPieYear, setSelectedPieYear] = useState(currentYear);
+  const [selectedExpenseYear, setSelectedExpenseYear] = useState(currentYear);
+  const [selectedTrendYear, setSelectedTrendYear] = useState(currentYear);
+  const [selectedBalanceMonth, setSelectedBalanceMonth] = useState(currentMonth);
+  const [selectedBalanceYear, setSelectedBalanceYear] = useState(currentYear);
 
 
 
@@ -111,10 +124,11 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
   });
 
   const fetchMonthlySummary = useCallback(async () => {
+    setPieLoading(true);
     try {
-      console.log(`Fetching monthly summary for ${currentYear}/${currentMonth}`);
+      console.log(`Fetching monthly summary for ${selectedPieYear}/${selectedPieMonth}`);
       const response = await api.get<MonthlySummaryResponse>(
-        `/api/expenses/expense-summary/${currentYear}/${currentMonth}`
+        `/api/expenses/expense-summary/${selectedPieYear}/${selectedPieMonth}`
       );
       const data = response.data;
       console.log('Monthly summary response:', data);
@@ -165,7 +179,7 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
               "#fbbf24",
               "#ffff24"
             ],
-            borderColor: theme === 'dark' ? "#374151" : "#ffffff",
+            borderColor: "#ffffff",
             borderWidth: 2,
             hoverOffset: 5,
           },
@@ -175,6 +189,7 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
       setPieData(pieChartData);
       setServerAvailable(true);
     } catch (err) {
+      setPieLoading(false);
       console.error("Error fetching monthly summary:", err);
       // Create default data inline to avoid dependency issues
       const defaultPieData: PieData = {
@@ -194,7 +209,7 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
               "#fbbf24",
               "#ffff24"
             ],
-            borderColor: theme === 'dark' ? "#374151" : "#ffffff",
+            borderColor: "#ffffff",
             borderWidth: 2,
             hoverOffset: 5,
           },
@@ -202,14 +217,17 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
       };
       setPieData(defaultPieData);
       setServerAvailable(false);
+    } finally {
+      setPieLoading(false);
     }
-  }, [currentYear, currentMonth, theme]);
+  }, [selectedPieYear, selectedPieMonth]);
 
   const fetchYearlyExpenses = useCallback(async () => {
+    setLineLoading(true);
     try {
-      console.log(`Fetching yearly expenses for ${currentYear}`);
+      console.log(`Fetching yearly expenses for ${selectedExpenseYear}`);
       const response = await api.get<YearlyExpensesResponse>(
-        `/api/expenses/yearly-expenses/${currentYear}`
+        `/api/expenses/yearly-expenses/${selectedExpenseYear}`
       );
       const data = response.data;
       console.log('Yearly expenses response:', data);
@@ -248,14 +266,17 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
       console.error("Error fetching yearly expenses:", err);
       setLineData(getDefaultLineData());
       setServerAvailable(false);
+    } finally {
+      setLineLoading(false);
     }
-  }, [currentYear]);
+  }, [selectedExpenseYear]);
 
   const fetchMonthlyNetBalance = useCallback(async () => {
+    setBalanceLoading(true);
     try {
-      console.log(`Fetching monthly net balance for ${currentYear}/${currentMonth}`);
+      console.log(`Fetching monthly net balance for ${selectedBalanceYear}/${selectedBalanceMonth}`);
       const response = await api.get<MonthlyNetBalanceResponse>(
-        `/api/expenses/netbalance/${currentYear}/${currentMonth}`
+        `/api/expenses/netbalance/${selectedBalanceYear}/${selectedBalanceMonth}`
       );
       const data = response.data;
       console.log('Monthly net balance response:', data);
@@ -263,14 +284,17 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
     } catch (err) {
       console.error("Error fetching monthly net balance:", err);
       setMonthlyBalance(null);
+    } finally {
+      setBalanceLoading(false);
     }
-  }, [currentYear, currentMonth]);
+  }, [selectedBalanceYear, selectedBalanceMonth]);
 
   const fetchIncomeVsExpenseData = useCallback(async () => {
+    setTrendLoading(true);
     try {
-      console.log(`Fetching income vs expense data for ${currentYear}`);
+      console.log(`Fetching income vs expense data for ${selectedTrendYear}`);
       const response = await api.get(
-        `/api/expenses/summary/june-2025`
+        `/api/expenses/income-expense-by-year/${selectedTrendYear}`
       );
       const data = response.data;
       console.log('Income vs expense response:', data);
@@ -309,13 +333,16 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
     } catch (err) {
       console.error("Error fetching income vs expense data:", err);
       setIncomeVsExpenseData(null);
+    } finally {
+      setTrendLoading(false);
     }
-  }, [currentYear]);
+  }, [selectedTrendYear]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Initial load - fetch all data once
   useEffect(() => {
     if (!mounted) return;
     
@@ -337,21 +364,53 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
     };
 
     fetchData();
-  }, [mounted, refreshTrigger, fetchMonthlySummary, fetchYearlyExpenses, fetchMonthlyNetBalance, fetchIncomeVsExpenseData]);
+  }, [mounted, fetchMonthlySummary, fetchYearlyExpenses, fetchMonthlyNetBalance, fetchIncomeVsExpenseData]);
 
-  // Show a subtle refresh indicator when refreshTrigger changes
+  // Separate useEffect for pie chart - only refetch when pie chart dates change
   useEffect(() => {
-    if (refreshTrigger > 0) {
-      setShowRefreshIndicator(true);
+    if (!mounted) return;
+    fetchMonthlySummary();
+  }, [selectedPieMonth, selectedPieYear, mounted, fetchMonthlySummary]);
+
+  // Separate useEffect for yearly expenses - only refetch when expense year changes
+  useEffect(() => {
+    if (!mounted) return;
+    fetchYearlyExpenses();
+  }, [selectedExpenseYear, mounted, fetchYearlyExpenses]);
+
+  // Separate useEffect for monthly balance - only refetch when balance dates change
+  useEffect(() => {
+    if (!mounted) return;
+    fetchMonthlyNetBalance();
+  }, [selectedBalanceMonth, selectedBalanceYear, mounted, fetchMonthlyNetBalance]);
+
+  // Separate useEffect for income vs expense trend - only refetch when trend year changes
+  useEffect(() => {
+    if (!mounted) return;
+    fetchIncomeVsExpenseData();
+  }, [selectedTrendYear, mounted, fetchIncomeVsExpenseData]);
+
+  // Refresh all data when refreshTrigger changes (from parent component)
+  useEffect(() => {
+    if (!mounted || refreshTrigger === 0) return;
+    
+    setShowRefreshIndicator(true);
+    
+    Promise.all([
+      fetchMonthlySummary(), 
+      fetchYearlyExpenses(),
+      fetchMonthlyNetBalance(),
+      fetchIncomeVsExpenseData()
+    ]).then(() => {
       const timer = setTimeout(() => setShowRefreshIndicator(false), 2000);
       return () => clearTimeout(timer);
-    }
-  }, [refreshTrigger]);
+    });
+  }, [refreshTrigger, mounted, fetchMonthlySummary, fetchYearlyExpenses, fetchMonthlyNetBalance, fetchIncomeVsExpenseData]);
 
   if (loading) {
     return (
       <div className="p-4 sm:p-6">
-        <div className={`flex items-center justify-center space-x-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+        <div className="flex items-center justify-center space-x-2 text-gray-700">
           <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
           <span>Loading statistics...</span>
         </div>
@@ -362,17 +421,13 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
   return (
     <div className="p-4 sm:p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
-          Statistics -{" "}
-          {new Date().toLocaleDateString("en-US", {
-            month: "long",
-            year: "numeric",
-          })}
+        <h2 className="text-xl font-semibold text-gray-900">
+          Statistics 
         </h2>
         {showRefreshIndicator && (
-          <div className={`flex items-center space-x-2 px-3 py-1 rounded-full ${theme === 'dark' ? 'bg-emerald-900/20' : 'bg-emerald-50'} border ${theme === 'dark' ? 'border-emerald-600' : 'border-emerald-200'}`}>
-            <div className="w-3 h-3 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-            <span className={`text-xs font-medium ${theme === 'dark' ? 'text-emerald-300' : 'text-emerald-600'}`}>
+          <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+            <div className="w-3 h-3 border-2 border-[#15994e] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xs font-medium text-[#15994e]">
               Updating...
             </span>
           </div>
@@ -380,19 +435,62 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
       </div>
 
       {!serverAvailable && (
-        <div className={`mb-4 p-3 rounded-lg ${theme === 'dark' ? 'bg-yellow-900/20 border border-yellow-600' : 'bg-yellow-50 border border-yellow-200'}`}>
-          <p className={`text-sm ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-800'}`}>
+        <div className="mb-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+          <p className="text-sm text-yellow-800">
             ⚠️ Server not available. Showing sample data for demonstration.
           </p>
         </div>
       )}
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className={`flex-1 p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-          <h3 className={`text-lg font-semibold mb-4 text-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
-            Monthly Expenses by Category
-          </h3>
-          {pieData ? (
+        <div className="flex-1 p-4 rounded-2xl bg-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Monthly Expenses by Category
+            </h3>
+            <div className="flex items-center space-x-2">
+              <select
+                value={selectedPieMonth}
+                onChange={(e) => setSelectedPieMonth(Number(e.target.value))}
+                className="px-3 py-1 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-[#15994e] focus:border-[#15994e]"
+              >
+                {Array.from(
+                  { length: selectedPieYear === currentYear ? currentMonth : 12 }, 
+                  (_, i) => i + 1
+                ).map((month) => (
+                  <option key={month} value={month}>
+                    {new Date(selectedPieYear, month - 1).toLocaleDateString("en-US", { month: "short" })}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedPieYear}
+                onChange={(e) => {
+                  const newYear = Number(e.target.value);
+                  setSelectedPieYear(newYear);
+                  // Reset month to current if switching to current year and selected month is in future
+                  if (newYear === currentYear && selectedPieMonth > currentMonth) {
+                    setSelectedPieMonth(currentMonth);
+                  }
+                }}
+                className="px-3 py-1 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-[#15994e] focus:border-[#15994e]"
+              >
+                {Array.from({ length: 5 }, (_, i) => currentYear - i).map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {pieLoading ? (
+            <div className="flex items-center justify-center h-64 sm:h-80">
+              <div className="flex items-center space-x-2 text-gray-600">
+                <div className="w-4 h-4 border-2 border-[#15994e] border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm">Loading...</span>
+              </div>
+            </div>
+          ) : pieData ? (
             <div className="w-full h-64 sm:h-80">
               <Pie
                 data={pieData}
@@ -402,7 +500,7 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
                   plugins: {
                     legend: {
                       labels: {
-                        color: theme === 'dark' ? '#d1d5db' : '#374151',
+                        color: '#374151',
                       },
                     },
                     tooltip: {
@@ -425,17 +523,41 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
               />
             </div>
           ) : (
-            <p className={`text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+            <p className="text-center text-gray-500">
               No data available
             </p>
           )}
         </div>
 
-        <div className={`flex-1 p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-          <h3 className={`text-lg font-semibold mb-4 text-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
-            Yearly Expenses Overview ({currentYear})
-          </h3>
-          {lineData ? (
+        <div className="flex-1 p-4 rounded-2xl bg-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => setSelectedExpenseYear(selectedExpenseYear - 1)}
+              className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
+              title="Previous Year"
+            >
+              <ChevronLeft className="w-5 h-5 text-gray-700" />
+            </button>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Yearly Expenses Overview - {selectedExpenseYear}
+            </h3>
+            <button
+              onClick={() => setSelectedExpenseYear(selectedExpenseYear + 1)}
+              disabled={selectedExpenseYear >= currentYear}
+              className="p-2 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Next Year"
+            >
+              <ChevronRight className="w-5 h-5 text-gray-700" />
+            </button>
+          </div>
+          {lineLoading ? (
+            <div className="flex items-center justify-center h-64 sm:h-80">
+              <div className="flex items-center space-x-2 text-gray-600">
+                <div className="w-4 h-4 border-2 border-[#15994e] border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm">Loading...</span>
+              </div>
+            </div>
+          ) : lineData ? (
             <div className="w-full h-64 sm:h-80">
               <Line
                 data={lineData}
@@ -446,7 +568,7 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
                     legend: {
                       position: "top",
                       labels: {
-                        color: theme === 'dark' ? '#d1d5db' : '#374151',
+                        color: '#374151',
                       },
                     },
                   },
@@ -456,21 +578,21 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
                       title: {
                         display: true,
                         text: "Amount (LKR)",
-                        color: theme === 'dark' ? '#d1d5db' : '#374151',
+                        color: '#374151',
                       },
                       grid: {
-                        color: theme === 'dark' ? '#374151' : '#e5e7eb',
+                        color: '#e5e7eb',
                       },
                       ticks: {
-                        color: theme === 'dark' ? '#d1d5db' : '#374151',
+                        color: '#374151',
                       },
                     },
                     x: {
                       grid: {
-                        color: theme === 'dark' ? '#374151' : '#e5e7eb',
+                        color: '#e5e7eb',
                       },
                       ticks: {
-                        color: theme === 'dark' ? '#d1d5db' : '#374151',
+                        color: '#374151',
                       },
                     },
                   },
@@ -478,7 +600,7 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
               />
             </div>
           ) : (
-            <p className={`text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+            <p className="text-center text-gray-500">
               No data available
             </p>
           )}
@@ -486,46 +608,121 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
       </div>
 
       {/* Financial Health Summary */}
-      {monthlyBalance && (
-        <div className={`mt-6 p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-          <h3 className={`text-lg font-semibold mb-4 text-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+      <div className="mt-6 p-4 rounded-2xl bg-white">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">
             Monthly Financial Summary
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-green-900/20' : 'bg-green-50'} border ${theme === 'dark' ? 'border-green-600' : 'border-green-200'}`}>
+            <div className="flex items-center space-x-2">
+              <select
+                value={selectedBalanceMonth}
+                onChange={(e) => setSelectedBalanceMonth(Number(e.target.value))}
+                className="px-3 py-1 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-[#15994e] focus:border-[#15994e]"
+              >
+                {Array.from(
+                  { length: selectedBalanceYear === currentYear ? currentMonth : 12 }, 
+                  (_, i) => i + 1
+                ).map((month) => (
+                  <option key={month} value={month}>
+                    {new Date(selectedBalanceYear, month - 1).toLocaleDateString("en-US", { month: "long" })}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedBalanceYear}
+                onChange={(e) => {
+                  const newYear = Number(e.target.value);
+                  setSelectedBalanceYear(newYear);
+                  // Reset month to current if switching to current year and selected month is in future
+                  if (newYear === currentYear && selectedBalanceMonth > currentMonth) {
+                    setSelectedBalanceMonth(currentMonth);
+                  }
+                }}
+                className="px-3 py-1 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-[#15994e] focus:border-[#15994e]"
+              >
+                {Array.from({ length: 5 }, (_, i) => currentYear - i).map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {balanceLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="flex items-center space-x-2 text-gray-600">
+                <div className="w-4 h-4 border-2 border-[#15994e] border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm">Loading...</span>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {monthlyBalance && (
+              <>
+            <div className="p-3 rounded-xl bg-green-50">
               <div className="text-center">
-                <p className={`text-sm ${theme === 'dark' ? 'text-green-300' : 'text-green-600'}`}>Total Income</p>
-                <p className={`text-xl font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-700'}`}>
+                <p className="text-sm text-[#15994e]">Total Income</p>
+                <p className="text-xl font-bold text-[#15994e]">
                   {monthlyBalance.totalIncome.toFixed(2)} LKR
                 </p>
               </div>
             </div>
-            <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-red-900/20' : 'bg-red-50'} border ${theme === 'dark' ? 'border-red-600' : 'border-red-200'}`}>
+            <div className="p-3 rounded-xl bg-red-50">
               <div className="text-center">
-                <p className={`text-sm ${theme === 'dark' ? 'text-red-300' : 'text-red-600'}`}>Total Expenses</p>
-                <p className={`text-xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-700'}`}>
+                <p className="text-sm text-red-700">Total Expenses</p>
+                <p className="text-xl font-bold text-red-700">
                   {monthlyBalance.totalExpense.toFixed(2)} LKR
                 </p>
               </div>
             </div>
-            <div className={`p-3 rounded-lg ${monthlyBalance.netBalance >= 0 ? (theme === 'dark' ? 'bg-emerald-900/20' : 'bg-emerald-50') : (theme === 'dark' ? 'bg-red-900/20' : 'bg-red-50')} border ${monthlyBalance.netBalance >= 0 ? (theme === 'dark' ? 'border-emerald-600' : 'border-emerald-200') : (theme === 'dark' ? 'border-red-600' : 'border-red-200')}`}>
+            <div className={`p-3 rounded-xl ${monthlyBalance.netBalance >= 0 ? 'bg-emerald-50' : 'bg-red-50'} `}>
               <div className="text-center">
-                <p className={`text-sm ${monthlyBalance.netBalance >= 0 ? (theme === 'dark' ? 'text-emerald-300' : 'text-emerald-600') : (theme === 'dark' ? 'text-red-300' : 'text-red-600')}`}>Net Balance</p>
-                <p className={`text-xl font-bold ${monthlyBalance.netBalance >= 0 ? (theme === 'dark' ? 'text-emerald-400' : 'text-emerald-700') : (theme === 'dark' ? 'text-red-400' : 'text-red-700')}`}>
+                <p className={`text-sm ${monthlyBalance.netBalance >= 0 ? 'text-[#15994e]' : 'text-red-700'}`}>Net Balance</p>
+                <p className={`text-xl font-bold ${monthlyBalance.netBalance >= 0 ? 'text-[#15994e]' : 'text-red-700'}`}>
                   {monthlyBalance.netBalance >= 0 ? '+' : ''}{monthlyBalance.netBalance.toFixed(2)} LKR
                 </p>
               </div>
             </div>
+              </>
+            )}
+            {!monthlyBalance && (
+              <div className="col-span-3 text-center text-gray-500 py-4">
+                No data available
+              </div>
+            )}
           </div>
+          )}
         </div>
-      )}
 
       {/* Income vs Expenses Chart */}
-      {incomeVsExpenseData && (
-        <div className={`mt-6 p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-          <h3 className={`text-lg font-semibold mb-4 text-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
-            Income vs Expenses Trend
+      <div className="mt-6 p-4 rounded-2xl bg-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => setSelectedTrendYear(selectedTrendYear - 1)}
+            className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
+            title="Previous Year"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Income vs Expenses Trend - {selectedTrendYear}
           </h3>
+          <button
+            onClick={() => setSelectedTrendYear(selectedTrendYear + 1)}
+            className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
+            title="Next Year"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-700" />
+          </button>
+        </div>
+        {trendLoading ? (
+          <div className="flex items-center justify-center h-64 sm:h-80">
+            <div className="flex items-center space-x-2 text-gray-600">
+              <div className="w-4 h-4 border-2 border-[#15994e] border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm">Loading...</span>
+            </div>
+          </div>
+        ) : incomeVsExpenseData ? (
           <div className="w-full h-64 sm:h-80">
             <Line
               data={incomeVsExpenseData}
@@ -536,7 +733,7 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
                   legend: {
                     position: "top",
                     labels: {
-                      color: theme === 'dark' ? '#d1d5db' : '#374151',
+                      color: '#374151',
                     },
                   },
                 },
@@ -546,39 +743,43 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
                     title: {
                       display: true,
                       text: "Amount (LKR)",
-                      color: theme === 'dark' ? '#d1d5db' : '#374151',
+                      color: '#374151',
                     },
                     grid: {
-                      color: theme === 'dark' ? '#374151' : '#e5e7eb',
+                      color: '#e5e7eb',
                     },
                     ticks: {
-                      color: theme === 'dark' ? '#d1d5db' : '#374151',
+                      color: '#374151',
                     },
                   },
                   x: {
                     grid: {
-                      color: theme === 'dark' ? '#374151' : '#e5e7eb',
+                      color: '#e5e7eb',
                     },
                     ticks: {
-                      color: theme === 'dark' ? '#d1d5db' : '#374151',
+                      color: '#374151',
                     },
                   },
                 },
               }}
             />
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-center text-gray-500 py-8">
+            No data available
+          </p>
+        )}
+      </div>
 
       {/* Financial Insights */}
-      <div className={`mt-6 p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-        <h3 className={`text-lg font-semibold mb-4 text-center ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+      <div className="mt-6 p-4 rounded-2xl bg-gray-100">
+        <h3 className="text-lg font-semibold mb-4 text-center text-gray-900">
           Financial Insights
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
-            <h4 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>💡 Tips for Better Financial Health</h4>
-            <ul className={`text-sm space-y-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+          <div className="p-4 rounded-2xl bg-gray-50 ">
+            <h4 className="font-semibold mb-2 text-gray-900">Tips for Better Financial Health</h4>
+            <ul className="text-sm space-y-1 text-gray-600">
               <li>• Track every expense, no matter how small</li>
               <li>• Set monthly budget limits for each category</li>
               <li>• Review your spending patterns weekly</li>
@@ -586,9 +787,9 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
               <li>• Use the 50/30/20 rule: 50% needs, 30% wants, 20% savings</li>
             </ul>
           </div>
-          <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
-            <h4 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>📊 Key Metrics</h4>
-            <div className={`text-sm space-y-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+          <div className="p-4 rounded-2xl bg-gray-50 ">
+            <h4 className="font-semibold mb-2 text-gray-900">Key Metrics</h4>
+            <div className="text-sm space-y-2 text-gray-600">
               <div className="flex justify-between">
                 <span>Savings Rate:</span>
                 <span className="font-semibold">
@@ -603,7 +804,7 @@ const Stats: React.FC<StatsProps> = ({ refreshTrigger = 0 }) => {
               </div>
               <div className="flex justify-between">
                 <span>Financial Status:</span>
-                <span className={`font-semibold ${monthlyBalance && monthlyBalance.netBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <span className={`font-semibold ${monthlyBalance && monthlyBalance.netBalance >= 0 ? 'text-[#15994e]' : 'text-red-700'}`}>
                   {monthlyBalance && monthlyBalance.netBalance >= 0 ? 'Healthy' : 'Needs Attention'}
                 </span>
               </div>

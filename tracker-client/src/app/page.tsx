@@ -3,11 +3,9 @@ import React, { useState, useEffect } from 'react';
 import Image from "next/image";
 import { ArrowRight, Wallet, TrendingUp, Shield, Zap, CheckCircle, BarChart3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useThemeStore } from '@/utils/theme';
 
 export default function LandingPage() {
   const router = useRouter();
-  const { theme } = useThemeStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -149,12 +147,12 @@ export default function LandingPage() {
   }
 
   return (
-    <div className={`h-screen bg-gradient-to-br ${theme === 'dark' ? 'from-gray-900 to-gray-800' : 'from-slate-50 to-emerald-50'} flex flex-col transition-colors duration-200 overflow-hidden`}>
+    <div className="h-screen bg-gradient-to-br from-slate-50 to-emerald-50 flex flex-col transition-colors duration-200 overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className={`absolute -top-40 -right-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob ${theme === 'dark' ? 'bg-emerald-900' : 'bg-emerald-200'}`}></div>
-        <div className={`absolute -bottom-40 -left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000 ${theme === 'dark' ? 'bg-blue-900' : 'bg-blue-200'}`}></div>
-        <div className={`absolute top-40 left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000 ${theme === 'dark' ? 'bg-purple-900' : 'bg-purple-200'}`}></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-40 left-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
       </div>
 
       {/* Navigation */}
@@ -162,7 +160,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Image src="/logo.png" alt="logo" width={40} height={40} className="sm:w-[50px] sm:h-[50px]" />
-            <span className={`text-2xl sm:text-4xl font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>WeSpend</span>
+            <span className="text-2xl sm:text-4xl font-bold text-slate-800">WeSpend</span>
           </div>
         </div>
       </nav>
@@ -174,17 +172,17 @@ export default function LandingPage() {
             <div className="space-y-6 sm:space-y-8">
               <div className="space-y-4 sm:space-y-6">
                 <div className="flex items-center space-x-2 mb-4">
-                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${theme === 'dark' ? 'bg-emerald-900 text-emerald-300' : 'bg-emerald-100 text-emerald-700'}`}>
+                  <div className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
                     💶 Smart Finance Management
                   </div>
                 </div>
-                <h1 className={`text-4xl sm:text-5xl lg:text-7xl font-bold leading-tight ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>
+                <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold leading-tight text-slate-800">
                   Welcome to{' '}
                   <span className="bg-gradient-to-r from-emerald-500 to-emerald-600 bg-clip-text text-transparent">
                     WeSpend
                   </span>
                 </h1>
-                <p className={`text-lg sm:text-xl leading-relaxed max-w-lg ${theme === 'dark' ? 'text-gray-300' : 'text-slate-600'}`}>
+                <p className="text-lg sm:text-xl leading-relaxed max-w-lg text-slate-600">
                   Take control of your finances with our intuitive expense tracking platform. 
                   Monitor spending, set budgets, and achieve your financial goals effortlessly.
                 </p>
@@ -201,65 +199,65 @@ export default function LandingPage() {
               <div className="grid grid-cols-2 gap-4 pt-4">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-5 h-5 text-emerald-500" />
-                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-slate-600'}`}>Free Forever</span>
+                  <span className="text-sm text-slate-600">Free Forever</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Shield className="w-5 h-5 text-emerald-500" />
-                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-slate-600'}`}>Bank-Level Security</span>
+                  <span className="text-sm text-slate-600">Bank-Level Security</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Zap className="w-5 h-5 text-emerald-500" />
-                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-slate-600'}`}>Real-time Sync</span>
+                  <span className="text-sm text-slate-600">Real-time Sync</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <BarChart3 className="w-5 h-5 text-emerald-500" />
-                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-slate-600'}`}>Smart Analytics</span>
+                  <span className="text-sm text-slate-600">Smart Analytics</span>
                 </div>
               </div>
             </div>
 
             <div className="relative hidden lg:block pt-16">
               {/* Enhanced Dashboard Preview with Interactive Elements */}
-              <div className={`relative z-20 rounded-3xl shadow-2xl p-6 sm:p-8 transform rotate-3 hover:rotate-0 transition-transform duration-500 backdrop-blur-sm border -mt-12 ${theme === 'dark' ? 'bg-gray-800/80 border-gray-700/20' : 'bg-white/80 border-white/20'}`}>
+              <div className="relative z-20 rounded-3xl shadow-2xl p-6 sm:p-8 transform rotate-3 hover:rotate-0 transition-transform duration-500 bg-white/80 backdrop-blur-sm border border-white/20 -mt-12">
                 <div className="space-y-4 sm:space-y-6">
                   <div className="flex items-center justify-between">
-                    <h3 className={`text-base sm:text-lg font-semibold ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>Monthly Overview</h3>
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-800">Monthly Overview</h3>
                     <div className="flex items-center space-x-2">
                       <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-                      <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>Live</span>
+                      <span className="text-xs text-slate-600">Live</span>
                     </div>
                   </div>
                   
                   <div className="space-y-3 sm:space-y-4">
-                    <div className={`flex items-center justify-between p-3 sm:p-4 rounded-xl ${theme === 'dark' ? 'bg-gray-700' : 'bg-slate-50'}`}>
+                    <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-slate-50">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                           <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
                         </div>
                         <div>
-                          <div className={`font-medium text-sm sm:text-base ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>Total Spent</div>
-                          <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>This month</div>
+                          <div className="font-medium text-sm sm:text-base text-slate-800">Total Spent</div>
+                          <div className="text-xs sm:text-sm text-slate-600">This month</div>
                         </div>
                       </div>
-                      <div className={`text-lg sm:text-xl font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>2,847 lkr</div>
+                      <div className="text-lg sm:text-xl font-bold text-slate-800">2,847 lkr</div>
                     </div>
                     
                     <div className="space-y-2 sm:space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>Food & Dining</span>
-                        <span className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-slate-700'}`}>847 lkr</span>
+                        <span className="text-xs sm:text-sm text-slate-600">Food & Dining</span>
+                        <span className="text-xs sm:text-sm font-medium text-slate-700">847 lkr</span>
                       </div>
-                      <div className={`w-full rounded-full h-2 ${theme === 'dark' ? 'bg-gray-600' : 'bg-slate-200'}`}>
+                      <div className="w-full rounded-full h-2 bg-slate-200">
                         <div className="bg-emerald-500 h-2 rounded-full w-3/4 animate-pulse"></div>
                       </div>
                     </div>
                     
                     <div className="space-y-2 sm:space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>Transportation</span>
-                        <span className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-slate-700'}`}>420 lkr</span>
+                        <span className="text-xs sm:text-sm text-slate-600">Transportation</span>
+                        <span className="text-xs sm:text-sm font-medium text-slate-700">420 lkr</span>
                       </div>
-                      <div className={`w-full rounded-full h-2 ${theme === 'dark' ? 'bg-gray-600' : 'bg-slate-200'}`}>
+                      <div className="w-full rounded-full h-2 bg-slate-200">
                         <div className="bg-emerald-400 h-2 rounded-full w-1/2 animate-pulse"></div>
                       </div>
                     </div>
@@ -288,36 +286,36 @@ export default function LandingPage() {
               </div>
 
               {/* Enhanced Statistics Card */}
-              <div className={`absolute top-8 -left-8 w-48 h-32 rounded-2xl shadow-xl backdrop-blur-sm border transform rotate-6 hover:rotate-0 transition-transform duration-500 z-30 ${theme === 'dark' ? 'bg-gray-800/80 border-gray-700/20' : 'bg-white/90 border-white/20'}`}>
+              <div className="absolute top-8 -left-8 w-48 h-32 rounded-2xl shadow-xl bg-white/90 backdrop-blur-sm border border-white/20 transform rotate-6 hover:rotate-0 transition-transform duration-500 z-30">
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <TrendingUp className="w-5 h-5 text-emerald-500" />
                     <div className="text-xs text-emerald-500 font-medium animate-pulse">+12.5%</div>
                   </div>
-                  <div className={`text-lg font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>lkr 2.4M</div>
-                  <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>Saved by users</div>
+                  <div className="text-lg font-bold text-slate-800">lkr 2.4M</div>
+                  <div className="text-xs text-slate-600">Saved by users</div>
                 </div>
               </div>
 
               {/* Enhanced Feature Showcase */}
-              <div className={`absolute bottom-8 -left-4 w-56 rounded-2xl shadow-xl backdrop-blur-sm border transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-30 ${theme === 'dark' ? 'bg-gray-800/80 border-gray-700/20' : 'bg-white/90 border-white/20'}`}>
+              <div className="absolute bottom-8 -left-4 w-56 rounded-2xl shadow-xl bg-white/90 backdrop-blur-sm border border-white/20 transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-30">
                 <div className="p-4 space-y-3">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center">
+                    <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
                       <Shield className="w-4 h-4 text-emerald-500" />
                     </div>
                     <div>
-                      <div className={`text-sm font-semibold ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>Bank-Level Security</div>
-                      <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>256-bit encryption</div>
+                      <div className="text-sm font-semibold text-slate-800">Bank-Level Security</div>
+                      <div className="text-xs text-slate-600">256-bit encryption</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center">
+                    <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
                       <Zap className="w-4 h-4 text-emerald-500" />
                     </div>
                     <div>
-                      <div className={`text-sm font-semibold ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>Real-time Sync</div>
-                      <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>Instant updates</div>
+                      <div className="text-sm font-semibold text-slate-800">Real-time Sync</div>
+                      <div className="text-xs text-slate-600">Instant updates</div>
                     </div>
                   </div>
                 </div>
@@ -326,27 +324,27 @@ export default function LandingPage() {
               {/* Simple & Clean Elements */}
               
               {/* Main Statistics Card - Top Right */}
-              <div className={`absolute top-8 -right-4 w-44 rounded-2xl shadow-xl backdrop-blur-sm border transform rotate-2 hover:rotate-0 transition-transform duration-500 z-30 ${theme === 'dark' ? 'bg-gray-800/80 border-gray-700/20' : 'bg-white/90 border-white/20'}`}>
+              <div className="absolute top-8 -right-4 w-44 rounded-2xl shadow-xl bg-white/90 backdrop-blur-sm border border-white/20 transform rotate-2 hover:rotate-0 transition-transform duration-500 z-30">
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <TrendingUp className="w-5 h-5 text-emerald-500" />
                     <div className="text-xs text-emerald-500 font-medium animate-pulse">+12.5%</div>
                   </div>
-                  <div className={`text-lg font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-slate-800'}`}>lkr 2.4M</div>
-                  <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>Saved by users</div>
+                  <div className="text-lg font-bold text-slate-800">lkr 2.4M</div>
+                  <div className="text-xs text-slate-600">Saved by users</div>
                 </div>
               </div>
 
               {/* Quick Add Button - Bottom Right */}
-              <div className={`absolute bottom-8 -right-4 w-36 rounded-2xl shadow-xl backdrop-blur-sm border transform -rotate-2 hover:rotate-0 transition-transform duration-500 z-30 ${theme === 'dark' ? 'bg-gray-800/80 border-gray-700/20' : 'bg-white/90 border-white/20'}`}>
+              <div className="absolute bottom-8 -right-4 w-36 rounded-2xl shadow-xl bg-white/90 backdrop-blur-sm border border-white/20 transform -rotate-2 hover:rotate-0 transition-transform duration-500 z-30">
                 <div className="p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className={`text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-slate-700'}`}>Quick Add</span>
+                    <span className="text-xs font-medium text-slate-700">Quick Add</span>
                     <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs">+</span>
                     </div>
                   </div>
-                  <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>Tap to add expense</div>
+                  <div className="text-xs text-slate-600">Tap to add expense</div>
                 </div>
               </div>
 

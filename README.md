@@ -44,7 +44,7 @@ A modern, responsive expense tracking application with dark mode, customizable d
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
+- Node.js (v20.9.0 or higher)
 - npm or yarn
 - MongoDB (local or cloud)
 
@@ -266,17 +266,65 @@ Daily-expense-tracker/
 
 ## Deployment
 
-### Frontend (Vercel/Netlify)
+### Frontend Deployment (Netlify)
+
+**Prerequisites:**
+- Netlify account
+- Git repository connected to Netlify
+
+**Configuration:**
+
+1. **netlify.toml** is already configured in the root directory with:
+   - Base directory: `tracker-client`
+   - Build command: `npm install && npm run build`
+   - Publish directory: `.next`
+   - Node version: 20 (required for Next.js 16)
+
+2. **Environment Variables** - Add these in Netlify dashboard:
+   ```
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+   CLERK_SECRET_KEY=your_clerk_secret_key
+   NEXT_PUBLIC_API_URL=your_production_api_url
+   ```
+
+3. **Deploy:**
+   - Push your code to your connected Git repository
+   - Netlify will automatically build and deploy
+   - Or manually deploy from Netlify dashboard
+
+**Important:**
+- Ensure Node version 20 or higher is set in Netlify (configured in netlify.toml)
+- Make sure all environment variables are set in Netlify dashboard
+- Update `NEXT_PUBLIC_API_URL` to your production backend URL
+
+### Frontend Deployment (Vercel)
+
+**Alternative option if using Vercel:**
 ```bash
 cd tracker-client
 npm run build
 ```
 
-### Backend (Railway/Heroku)
+Then deploy using Vercel CLI or connect your Git repository to Vercel dashboard.
+
+### Backend Deployment (Railway/Heroku/Render)
+
+**For Railway:**
 ```bash
 cd tracker-server
 npm start
 ```
+
+**Environment Variables Required:**
+```
+PORT=4000
+MONGODB_URI=your_production_mongodb_uri
+```
+
+**Important:**
+- Set Node version to 20.x in your deployment platform
+- Configure MongoDB connection string
+- Ensure CORS is configured for your frontend domain
 
 ## License
 
